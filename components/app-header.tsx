@@ -25,7 +25,7 @@ export function AppHeader({
           />
           <div className="hidden flex-col leading-tight sm:flex">
             <span className="font-serif text-sm font-semibold text-foreground">
-              SEPF Stable Management
+              Fanda Stable Management
             </span>
             <span className="text-xs text-muted-foreground">
               {role === 'admin' ? 'Administrator' : 'Rider portal'}

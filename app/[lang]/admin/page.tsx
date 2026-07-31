@@ -1,6 +1,6 @@
 import { requireAdmin } from '@/app/actions/auth'
-import { getOfficialDocument } from '@/app/actions/stables'
-import { FacilityDocumentManager } from '@/components/facility-document-manager'
+import { getOfficialDocument,getAdminPhone } from '@/app/actions/stables'
+import { GenericDocumentManager } from '@/components/generic-document-manager'
 import {
   getStableGrid,
   getBarnSummary,
@@ -12,14 +12,19 @@ import { RiderDirectory } from '@/components/rider-directory'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BarnRangeManager } from '@/components/barn-range-manager'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { AdminPhoneManager } from '@/components/admin-phone-manager'
 
 export default async function AdminPage() {
   const session = await requireAdmin()
-  const [stables, summary, riders, officialDocUrl] = await Promise.all([
+  const [stables, summary, riders, officialDocUrl, timeTableUrl, doorPicUrl, adminPhone] = await Promise.all([
     getStableGrid(),
     getBarnSummary(),
     getRiderDirectory(),
-    getOfficialDocument(),
+    getOfficialDocument('official_document'),
+    getOfficialDocument('time_table'),
+    getOfficialDocument('door_pic'),
+    getAdminPhone(),
   ])
 
   const totalStables = summary.reduce((a, b) => a + b.total, 0)
@@ -62,7 +67,28 @@ export default async function AdminPage() {
             <RiderDirectory riders={riders} />
           </TabsContent>
           <TabsContent value="barns" className="mt-4 flex flex-col gap-6">
-            <FacilityDocumentManager currentUrl={officialDocUrl} />
+            <AdminPhoneManager initialPhone={adminPhone} />
+           <GenericDocumentManager 
+                currentUrl={officialDocUrl} 
+                docKey="official_document"
+                title="Official Facility Document"
+                description="Upload Facility Rules or Map."
+                endpoint="facilityDocument"
+              />
+              <GenericDocumentManager 
+                currentUrl={timeTableUrl} 
+                docKey="time_table"
+                title="Time Table"
+                description="Upload the current rider or stable schedule."
+                endpoint="timeTableDocument"
+              />
+              <GenericDocumentManager 
+                currentUrl={doorPicUrl} 
+                docKey="door_pic"
+                title="Door Picture"
+                description="Upload a reference picture of the stable door."
+                endpoint="doorPicDocument"
+              />
             <BarnRangeManager barns={uniqueBarns} />
           </TabsContent>
         </Tabs>

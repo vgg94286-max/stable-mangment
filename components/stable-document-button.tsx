@@ -17,10 +17,12 @@ export function StableDocumentButton({
   riderName,
   reservations,
   officialDocUrl,
+  name,
 }: {
   riderName: string
   reservations: ReservationDetail[]
   officialDocUrl: string | null
+  name?: string
 }) {
   const [open, setOpen] = useState(false)
 
@@ -28,24 +30,29 @@ export function StableDocumentButton({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
+      <DialogTrigger render={<Button variant="outline"
+      className="max-w-full whitespace-normal break-words text-center h-auto py-2" />}>
   <FileText className="size-4" aria-hidden />
-  Stable Management Document
+  {name}
 </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Stable Management Document</DialogTitle>
+          <DialogTitle>{name}</DialogTitle>
         </DialogHeader>
         
         
-        {officialDocUrl && (
-          <Button variant="secondary" className="w-full" asChild>
-            <a href={officialDocUrl} target="_blank" rel="noreferrer">
-              <FileText className="size-4 mr-2" aria-hidden />
-              View Official Facility Document
-            </a>
-          </Button>
-        )}
+        {officialDocUrl ? (
+  <Button variant="secondary" className="w-full" asChild>
+    <a href={officialDocUrl} target="_blank" rel="noreferrer">
+      <FileText className="size-4 mr-2" aria-hidden />
+      View Official Document
+    </a>
+  </Button>
+) : (
+  <div className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+    No document is available at the moment.
+  </div>
+)}
       </DialogContent>
     </Dialog>
   )

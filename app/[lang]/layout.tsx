@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Fraunces } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
+import { getDictionary } from '@/dictionaries/get-dictionary' 
+import { DictionaryProvider } from '@/context/dictionary-context'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -15,7 +17,7 @@ const fraunces = Fraunces({
 })
 
 export const metadata: Metadata = {
-  title: 'SEPF Stable Management | Saudi Equestrian & Polo Federation',
+  title: 'Fanda Stable Management | Fanda',
   description:
     'Reserve, manage, and track horse stables across 26 barns with the Saudi Equestrian and Polo Federation stable management platform.',
   icons: {
@@ -27,18 +29,26 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#1f6f5c',
+  
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode
+  params: { lang: string }
 }>) {
+  const resolvedParams = await params
+  const lang = resolvedParams.lang 
+  const dict = await getDictionary(lang)
+  const isArabic = lang === 'ar'
   return (
-    <html lang="en" className={`${dmSans.variable} ${fraunces.variable} bg-background`}>
-      <body className="font-sans antialiased">
-        {children}
+    <html lang={lang} dir={isArabic ? 'rtl' : 'ltr'} className={`${dmSans.variable} ${fraunces.variable}  `}>
+      <body className="font-sans antialiased bg-background text-foreground">
+        <DictionaryProvider dictionary={dict} lang={lang}>
+          {children}
+        </DictionaryProvider>
         <Toaster position="top-center" richColors />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

@@ -4,22 +4,29 @@ import {
   getMyReservations,
   getStableGrid,
   getBarnSummary,
-  getOfficialDocument
+  getOfficialDocument,
+  getAdminPhone,
 } from '@/app/actions/stables'
 import { AppHeader } from '@/components/app-header'
 import { BookingFlow } from '@/components/booking-flow'
 import { RiderReservations } from '@/components/rider-reservations'
 import { StableDocumentButton } from '@/components/stable-document-button'
+import { RiderBookingArea } from '@/components/rider-booking-area'
 import { Card } from '@/components/ui/card'
+
+import { Phone } from 'lucide-react'
 
 export default async function DashboardPage() {
   const session = await requireRider()
-  const [horses, reservations, stables, summary , officialDocUrl] = await Promise.all([
+  const [horses, reservations, stables, adminPhone, summary , officialDocUrl ,timeTableUrl, doorPicUrl] = await Promise.all([
     getMyHorses(),
     getMyReservations(),
     getStableGrid(),
+    getAdminPhone(),
     getBarnSummary(),
-    getOfficialDocument()
+    getOfficialDocument('official_document'),
+        getOfficialDocument('time_table'),
+        getOfficialDocument('door_pic'),
   ])
 
   const totalStables = summary.reduce((a, b) => a + b.total, 0)
@@ -38,9 +45,22 @@ export default async function DashboardPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Manage your horses and stable reservations.
             </p>
+            {adminPhone ? (
+              <a
+                href={`tel:${adminPhone}`}
+                className="mt-3 inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Phone className="size-3.5 text-primary" />
+                <span>Administration Contact: <strong className="font-semibold">{adminPhone}</strong></span>
+              </a>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
-            <StableDocumentButton riderName={session.name} reservations={reservations} officialDocUrl={officialDocUrl}/>
+            <div className="flex flex-wrap gap-2">
+            <StableDocumentButton riderName={session.name} reservations={reservations} officialDocUrl={officialDocUrl} name="Stable Management Document"/>
+            <StableDocumentButton riderName={session.name} reservations={reservations} officialDocUrl={timeTableUrl} name="Time Table"/>
+            <StableDocumentButton riderName={session.name} reservations={reservations} officialDocUrl={doorPicUrl} name="Door Picture"/>
+            </div>
             <BookingFlow horses={horses} stables={stables} />
           </div>
         </div>
@@ -49,7 +69,7 @@ export default async function DashboardPage() {
           <StatCard label="Your horses" value={horses.length} />
           <StatCard label="Your reservations" value={reservations.length} />
           <StatCard label="Available stables" value={available} />
-          <StatCard label="Total stables" value={totalStables} />
+          
         </div>
 
         <section className="mt-8">

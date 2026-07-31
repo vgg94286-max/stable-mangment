@@ -52,6 +52,7 @@ export type StableGridItem = Stable & {
   gender: string | null 
   rider_id: number | null
   rider_name: string | null
+  note?: string | null
 }
 
 export type ReservationDetail = {
@@ -66,6 +67,7 @@ export type ReservationDetail = {
   rider_id: number
   rider_name: string
   rider_email: string
+  note?: string | null
 }
 
 

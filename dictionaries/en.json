@@ -1,0 +1,102 @@
+{
+  "home": {
+    "signIn": "Sign in",
+    "getStarted": "Sign up",
+    "badge": "Fandra — Stable Management",
+    "title": "Reserve and manage stables",
+    "description": "Riders register their horses and book from 1,300 stables across 26 barns in real time.",
+    "createAccount": "Create rider account",
+    "features": {
+      "bookingTitle": "Two-step booking",
+      "bookingDesc": "Add your horse's details, then pick an available stable in seconds.",
+      "stablesTitle": "1,300 stables",
+      "stablesDesc": "Browse all 26 barns with fast A-Z navigation and search.",
+      "securityTitle": "Secure access",
+      "securityDesc": "Email-verified accounts with encrypted passwords and sessions."
+    },
+    "footer": "Fandra — Stable Management Platform"
+  },
+  "auth": {
+    "common": {
+      "email": "Email",
+      "password": "Password",
+      "fullName": "Full name",
+      "phone": "Phone (optional)",
+      "verificationCode": "Verification code",
+      "resetCode": "Reset code",
+      "newPassword": "New password",
+      "forgotPassword": "Forgot password?",
+      "backToLogin": "Back to sign in",
+      "or": "or"
+    },
+
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to access your stable reservations and manage your horses.",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "Your password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+       "footer": "New rider?",
+  "footerLink": "Create an account",
+  "backHome": "← Back to Home"
+    },
+
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Register to book stables, manage your horses, and access your rider dashboard.",
+      "fullNamePlaceholder": "Faisal Al-Otaibi",
+      "emailPlaceholder": "you@example.com",
+      "phonePlaceholder": "+966 5X XXX XXXX",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "footer": "Already have an account?",
+      "footerLink": "Sign in",
+      "backHome": "← Back to Home"
+    },
+
+    "verify": {
+      "title": "Verify your email",
+      "subtitle": "Enter the 6-digit verification code sent to your email.",
+      "codePlaceholder": "6-digit code",
+      "submit": "Verify email",
+      "submitting": "Verifying...",
+      "resend": "Resend code",
+      "resending": "Sending..."
+    },
+
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a verification code.",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Send reset code",
+      "submitting": "Sending code...",
+      "backHome": "← Back to Home"
+    },
+
+    "resetPassword": {
+      "title": "Create a new password",
+      "subtitle": "Enter the reset code and choose a new password.",
+      "codePlaceholder": "6-digit code",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Reset password",
+      "resend": "Resend code",
+      "submitting": "Resetting..."
+    },
+    "adminLogin": {
+    "title": "Administrator access",
+    "subtitle": "Restricted area. Sign in with your Fanda administrator credentials.",
+    "email": "Administrator email",
+    "emailPlaceholder": "admin@example.com",
+    "password": "Password",
+    "submit": "Sign in as administrator",
+    "submitting": "Signing in...",
+    "riderSignIn": "Rider sign in",
+    "backHome": "Back to Home"
+  }
+
+  }
+  
+
+}

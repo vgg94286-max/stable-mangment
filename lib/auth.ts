@@ -4,7 +4,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
 import { sql, type User, type UserRole } from './db'
 
-const COOKIE_NAME = 'sepf_session'
+const COOKIE_NAME = 'fanda_session'
 const SESSION_DAYS = 7
 
 function getSecret() {

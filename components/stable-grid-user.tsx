@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Search , StickyNote} from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { StableGridItem } from '@/lib/db'
@@ -45,70 +45,42 @@ export function StableCell({
   item,
   onClick,
   selected,
-  isAdmin, // <-- 1. Add isAdmin prop
-  onDropHorse
 }: {
+  // 1. Remove the intersection type; just use StableGridItem
   item: StableGridItem 
   onClick?: (item: StableGridItem) => void
   selected?: boolean
-  isAdmin?: boolean 
-  onDropHorse?: (stableId: number, horseId: number) => void
 }) {
   const occupied = item.status === 'occupied'
   const blocked = !item.is_active
   
+  // 2. Safely cast the string to GenderType when looking it up
   const meta = item.gender ? GENDER_META[item.gender as GenderType] : null
-
-  // 2. Disable if no onClick is provided OR if it's a rider trying to click a blocked/occupied stable.
-  // Admins bypass the blocked/occupied restriction.
-  const isDisabled = !onClick && !onDropHorse || (!isAdmin && (blocked || occupied))
 
   return (
     <button
       type="button"
       onClick={() => onClick?.(item)}
-      onDragOver={(e: React.DragEvent<HTMLButtonElement>) => {
-        if (isDisabled || !onDropHorse) return
-        e.preventDefault() // Required to allow dropping
-      }}
-      onDrop={(e: React.DragEvent<HTMLButtonElement>) => {
-        if (isDisabled || !onDropHorse) return
-        e.preventDefault()
-        const horseId = e.dataTransfer.getData('horseId')
-        if (horseId) onDropHorse(item.id, parseInt(horseId, 10))
-      }}
-      disabled={isDisabled} 
+      disabled={blocked && !onClick} // Prevent interaction if purely viewing as a rider
       aria-label={`Stable ${item.label}`}
       className={cn(
         'flex h-[68px] flex-col items-start justify-center gap-0.5 rounded-lg border px-2.5 py-1.5 text-left transition-colors',
         blocked 
-          ? 'bg-muted/50 border-dashed border-muted-foreground/30 opacity-60' 
-          : occupied
-            ? meta 
-              ? cn(meta.cell, meta.text) 
-              : 'bg-muted/60 text-muted-foreground border-border' 
+          ? 'bg-muted/50 border-dashed border-muted-foreground/30 opacity-60 cursor-pointer'
+          : occupied && meta
+            ? cn(meta.cell, meta.text)
             : 'border-border bg-card hover:border-primary/50 hover:bg-secondary',
         selected && 'ring-2 ring-primary ring-offset-1',
-        isDisabled && 'cursor-not-allowed opacity-80' // Add visual cue for disabled state
       )}
     >
-      <div className="flex w-full items-center justify-between">
-        <span className="text-sm font-semibold leading-none">{item.label}</span>
-        {/* Admin note indicator */}
-        {isAdmin && item.note ? (
-          <StickyNote className="size-3 text-muted-foreground" />
-        ) : null}
-      </div>
+      <span className="text-sm font-semibold leading-none">{item.label}</span>
       {blocked ? (
         <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
           Blocked
         </span>
       ) : occupied ? (
-        <span className={cn(
-          "mt-0.5 line-clamp-1 w-full text-[11px] leading-tight",
-          !meta && "opacity-70 font-medium" 
-        )}>
-          {item.horse_name || 'Occupied'}
+        <span className="mt-0.5 line-clamp-1 w-full text-[11px] leading-tight opacity-90">
+          {item.horse_name}
         </span>
       ) : (
         <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
@@ -124,15 +96,11 @@ export function StableGrid({
   onCellClick,
   selectedStableId,
   toolbar,
-  isAdmin,
-  onDropHorse,
 }: {
   items: StableGridItem[]
   onCellClick?: (item: StableGridItem) => void
   selectedStableId?: number | null
   toolbar?: ReactNode
-  isAdmin?: boolean // <-- 1. Add isAdmin prop
-  onDropHorse?: (stableId: number, horseId: number) => void
 }) {
   const [query, setQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -203,7 +171,7 @@ export function StableGrid({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -274,7 +242,6 @@ export function StableGrid({
                           item={cell}
                           onClick={onCellClick}
                           selected={selectedStableId === cell.id}
-                          isAdmin={isAdmin}
                         />
                       ))}
                     </div>

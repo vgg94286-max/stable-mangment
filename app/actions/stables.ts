@@ -8,6 +8,9 @@ import {
   type ReservationDetail,
 } from '@/lib/db'
 import { getSession } from '@/lib/auth'
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi();
 
 async function requireSession() {
   const session = await getSession()
@@ -21,17 +24,46 @@ async function requireAdminSession() {
   return session
 }
 
+// app/actions/stables.ts
+
+// Fetch the admin phone number
+export async function getAdminPhone(): Promise<string | null> {
+  const rows = (await sql`
+    SELECT value FROM settings WHERE key = 'admin_phone'
+  `) as { value: string }[]
+  return rows[0]?.value || null
+}
+
+// Save or update the admin phone number (Admin only)
+export async function setAdminPhone(phone: string): Promise<ActionResult> {
+  await requireAdminSession()
+  try {
+    await sql`
+      INSERT INTO settings (key, value) 
+      VALUES ('admin_phone', ${phone.trim()})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+    `
+    revalidatePath('/dashboard')
+    revalidatePath('/admin')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: 'Failed to update phone number.' }
+  }
+}
+
 export type ActionResult = { ok: boolean; error?: string }
 
 // --- Reads -----------------------------------------------------------------
 
 // Full grid of every stable joined with any active reservation + horse + rider.
+// app/actions/stables.ts
+
 export async function getStableGrid(): Promise<StableGridItem[]> {
-  await requireSession()
+  const session = await requireSession() 
   const rows = (await sql`
     SELECT
       s.id, s.barn, s.number, s.label, s.status, s.is_active,
-      r.id AS reservation_id,
+      r.id AS reservation_id, r.note,
       h.id AS horse_id, h.name AS horse_name, h.gender AS gender,
       u.id AS rider_id, u.full_name AS rider_name
     FROM stables s
@@ -40,7 +72,26 @@ export async function getStableGrid(): Promise<StableGridItem[]> {
     LEFT JOIN users u ON u.id = r.rider_id
     ORDER BY s.barn, s.number
   `) as StableGridItem[]
+
+  if (session.role === 'admin') return rows
+
+  // Hide notes and details from other riders
   return rows
+    .filter(s => s.is_active || s.rider_id === session.userId)
+    .map(s => {
+      if (s.status === 'occupied' && s.rider_id !== session.userId) {
+        return {
+          ...s,
+          horse_name: 'Occupied',
+          rider_name: null,
+          rider_id: null,
+          gender: null,
+          horse_id: null,
+          note: null 
+        }
+      }
+      return s
+    })
 }
 export async function toggleStableActive(
   stableId: number, 
@@ -54,6 +105,36 @@ export async function toggleStableActive(
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Could not update stable status.' }
+  }
+}
+// app/actions/stables.ts
+
+export async function toggleBarnsActive(
+  barns: string[],
+  isActive: boolean
+): Promise<ActionResult> {
+  await requireAdminSession()
+  if (!barns || barns.length === 0) {
+    return { ok: false, error: 'No barns selected.' }
+  }
+
+  try {
+    if (isActive) {
+      // Unblock all stables in the selected barns
+      await sql`UPDATE stables SET is_active = true WHERE barn = ANY(${barns}::text[])`
+    } else {
+      // Block all stables in the selected barns, EXCEPT those currently occupied
+      await sql`
+        UPDATE stables 
+        SET is_active = false 
+        WHERE barn = ANY(${barns}::text[]) AND status != 'occupied'
+      `
+    }
+    revalidatePath('/admin')
+    revalidatePath('/dashboard')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: 'Could not update barns.' }
   }
 }
 
@@ -190,19 +271,30 @@ export async function createHorse(input: {
 export async function reserveStable(
   stableId: number,
   horseId: number,
+  note?: string
 ): Promise<ActionResult> {
   const session = await requireSession()
 
-  // Ensure the horse belongs to the requesting rider.
   const owns = (await sql`
     SELECT 1 FROM horses WHERE id = ${horseId} AND owner_id = ${session.userId}
   `) as unknown[]
-  if (owns.length === 0) {
-    return { ok: false, error: 'You do not own this horse.' }
-  }
+  if (owns.length === 0) return { ok: false, error: 'You do not own this horse.' }
 
   try {
+    // Run the atomic booking
     await sql`SELECT reserve_stable(${stableId}, ${horseId}, ${session.userId})`
+    
+    // Attach the note to the active reservation if provided
+    if (note && note.trim()) {
+      await sql`
+        UPDATE reservations 
+        SET note = ${note.trim()} 
+        WHERE stable_id = ${stableId} 
+          AND horse_id = ${horseId} 
+          AND status = 'active'
+      `
+    }
+    
     revalidatePath('/dashboard')
     revalidatePath('/admin')
     return { ok: true }
@@ -260,20 +352,55 @@ function cleanPgError(msg: string) {
 // --- Add to stables.ts ---
 
 // Get the official document URL (used by both Admin and Rider)
-export async function getOfficialDocument(): Promise<string | null> {
+export async function getOfficialDocument(docKey: string = 'official_document'): Promise<string | null> {
   const rows = (await sql`
-    SELECT value FROM settings WHERE key = 'official_document'
+    SELECT value FROM settings WHERE key = ${docKey}
   `) as { value: string }[]
   return rows[0]?.value || null
 }
+// app/actions/stables.ts
+
+// app/actions/stables.ts
+
+// app/actions/stables.ts
+
+export async function swapReservations(
+  res1Id: number,
+  stable1Id: number,
+  res2Id: number,
+  stable2Id: number
+): Promise<ActionResult> {
+  await requireAdminSession()
+  try {
+    // 1. Temporarily move res1 out of the 'active' state using a recognized status
+    // Note: If your schema spells this as 'cancelled' (two L's), adjust it here!
+    await sql`UPDATE reservations SET status = 'cancelled' WHERE id = ${res1Id}`
+    
+    // 2. Move res2 into the newly freed stable1
+    await sql`UPDATE reservations SET stable_id = ${stable1Id} WHERE id = ${res2Id}`
+    
+    // 3. Move res1 into stable2 and immediately restore its 'active' status
+    await sql`UPDATE reservations SET stable_id = ${stable2Id}, status = 'active' WHERE id = ${res1Id}`
+    
+    // Ensure both stables remain unblocked (active)
+    await sql`UPDATE stables SET is_active = true WHERE id IN (${stable1Id}, ${stable2Id})`
+    
+    revalidatePath('/admin')
+    revalidatePath('/dashboard')
+    return { ok: true }
+  } catch (e) {
+    console.error('Error swapping reservations:', e)
+    return { ok: false, error: 'Could not swap reservations.' }
+  }
+}
 
 // Update the official document URL (Admin only)
-export async function setOfficialDocument(url: string): Promise<ActionResult> {
+export async function setOfficialDocument(url: string, docKey: string = 'official_document'): Promise<ActionResult> {
   await requireAdminSession()
   try {
     await sql`
       INSERT INTO settings (key, value) 
-      VALUES ('official_document', ${url})
+      VALUES (${docKey}, ${url})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `
     revalidatePath('/dashboard')
@@ -284,6 +411,24 @@ export async function setOfficialDocument(url: string): Promise<ActionResult> {
   }
 }
 
+export async function deleteDocument(url: string, docKey: string): Promise<ActionResult> {
+  await requireAdminSession()
+  try {
+    // Extract file key from URL (works for ufs.sh/f/KEY or utfs.io/f/KEY)
+    const fileKey = url.split('/').pop(); 
+    if (fileKey) {
+      await utapi.deleteFiles(fileKey);
+    }
+
+    await sql`DELETE FROM settings WHERE key = ${docKey}`
+    
+    revalidatePath('/dashboard')
+    revalidatePath('/admin')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: 'Failed to delete document.' }
+  }
+}
 // Add to stables.ts
 
 export async function getRiderHorses(riderId: number): Promise<Horse[]> {

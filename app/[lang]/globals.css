@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import "@uploadthing/react/styles.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -49,43 +50,39 @@
 
 :root {
   color-scheme: light;
-  --background: oklch(0.99 0.005 160);
-  --foreground: oklch(0.26 0.03 190);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.26 0.03 190);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.26 0.03 190);
-  --primary: oklch(0.48 0.11 165);
-  --primary-foreground: oklch(0.99 0.01 160);
-  --secondary: oklch(0.95 0.02 165);
-  --secondary-foreground: oklch(0.32 0.06 175);
-  --muted: oklch(0.96 0.01 165);
-  --muted-foreground: oklch(0.52 0.03 180);
-  --accent: oklch(0.7 0.17 140);
-  --accent-foreground: oklch(0.22 0.04 180);
+  --background: #F8F9FB;
+  --foreground: #0B1F3A;
+  --card: #FFFFFF;
+  --card-foreground: #0B1F3A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0B1F3A;
+  --primary: #003A70;
+  --primary-foreground: #FFFFFF;
+  --secondary: #C9A45C;
+  --secondary-foreground: #FFFFFF;
+  --muted: #E2E8F0;
+  --muted-foreground: #2E3135;
+  --accent: #C9A45C;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.015 170);
-  --input: oklch(0.9 0.015 170);
-  --ring: oklch(0.48 0.11 165);
-  --chart-1: oklch(0.7 0.17 140);
-  --chart-2: oklch(0.55 0.12 160);
-  --chart-3: oklch(0.45 0.1 180);
-  --chart-4: oklch(0.6 0.13 90);
-  --chart-5: oklch(0.35 0.08 200);
+  --border: #2E313533; /* 20% opacity of your dark gray */
+  --input: #2E313533;
+  --ring: #003A70;
+  
   --radius: 0.625rem;
-  --sidebar: oklch(0.28 0.04 185);
-  --sidebar-foreground: oklch(0.95 0.01 160);
-  --sidebar-primary: oklch(0.7 0.17 140);
-  --sidebar-primary-foreground: oklch(0.2 0.03 185);
-  --sidebar-accent: oklch(0.34 0.05 180);
-  --sidebar-accent-foreground: oklch(0.95 0.01 160);
-  --sidebar-border: oklch(0.38 0.04 180);
-  --sidebar-ring: oklch(0.7 0.17 140);
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0B1F3A;
+  --sidebar-primary: #003A70;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F8F9FB;
+  --sidebar-accent-foreground: #0B1F3A;
+  --sidebar-border: #2E313533;
+  --sidebar-ring: #003A70;
 }
 
 .dark {
   color-scheme: dark;
-  --background: oklch(0.145 0 0);
+  --background: oklch(0. 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);

@@ -1,0 +1,100 @@
+{
+  "home": {
+    "signIn": "تسجيل الدخول",
+    "getStarted": "انشاء حساب",
+    "badge": "Fanda — إدارة الإسطبلات",
+    "title": "احجز وأدر الإسطبلات",
+    "description": "يمكن للفرسان تسجيل خيولهم وحجز الإسطبلات من بين 1,300 إسطبل موزعة على 26 عنبرًا في الوقت الفعلي",
+    "createAccount": "إنشاء حساب فارس",
+    "features": {
+      "bookingTitle": "الحجز بخطوتين",
+      "bookingDesc": "أضف بيانات حصانك ثم اختر إسطبلًا متاحًا خلال ثوانٍ",
+      "stablesTitle": "1,300 إسطبل",
+      "stablesDesc": "Z إلى A تصفح جميع الإسطبلات في 26 عنبرًا مع تنقل سريع من ",
+      "securityTitle": "وصول آمن",
+      "securityDesc": "حسابات موثقة عبر البريد الإلكتروني مع كلمات مرور وجلسات مشفرة"
+    },
+    "footer": "Fanda — منصة إدارة الإسطبلات"
+  },
+    "auth": {
+    "common": {
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "fullName": "الاسم الكامل",
+      "phone": "رقم الجوال (اختياري)",
+      "verificationCode": "رمز التحقق",
+      "resetCode": "رمز إعادة التعيين",
+      "newPassword": "كلمة المرور الجديدة",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "or": "أو"
+    },
+
+    "login": {
+      "title": "مرحبًا بعودتك",
+      "subtitle": "سجّل الدخول للوصول إلى حجوزات الإسطبلات وإدارة خيولك.",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول...",
+     "footer": "فارس جديد؟",
+  "footerLink": "إنشاء حساب",
+  "backHome": "← العودة للرئيسية"
+    },
+
+    "register": {
+      "title": "إنشاء حساب",
+      "subtitle": "أنشئ حسابًا لحجز الإسطبلات وإدارة خيولك والوصول إلى لوحة الفارس.",
+      "fullNamePlaceholder": "فيصل العتيبي",
+      "emailPlaceholder": "you@example.com",
+      "phonePlaceholder": "+966 5X XXX XXXX",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "submit": "إنشاء حساب",
+      "submitting": "جارٍ إنشاء الحساب...",
+      "footer": "لديك حساب بالفعل؟",
+      "footerLink": "تسجيل الدخول",
+      "backHome": "← العودة للرئيسية"
+    },
+
+    "verify": {
+      "title": "تأكيد البريد الإلكتروني",
+      "subtitle": "أدخل رمز التحقق المكوّن من 6 أرقام الذي تم إرساله إلى",
+      "codePlaceholder": "رمز مكوّن من 6 أرقام",
+      "submit": "تأكيد البريد الإلكتروني",
+      "submitting": "جارٍ التحقق...",
+      "resend": "إعادة إرسال الرمز",
+      "resending": "جارٍ الإرسال..."
+    },
+
+    "forgotPassword": {
+      "title": "إعادة تعيين كلمة المرور",
+      "subtitle": "أدخل بريدك الإلكتروني وسنرسل إليك رمز إعادة التعيين.",
+      "emailPlaceholder": "you@example.com",
+      "submit": "إرسال رمز إعادة التعيين",
+      "submitting": "جارٍ إرسال الرمز...",
+      "backHome": "← العودة للرئيسية"
+    },
+
+    "resetPassword": {
+      "title": "إنشاء كلمة مرور جديدة",
+      "subtitle": "أدخل رمز إعادة التعيين واختر كلمة مرور جديدة.",
+      "codePlaceholder": "رمز مكوّن من 6 أرقام",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "submit": "إعادة تعيين كلمة المرور",
+      "resend": "إعادة إرسال الرمز",
+      "submitting": "جارٍ إعادة التعيين..."
+    },
+    "adminLogin": {
+    "title": "دخول المسؤولين",
+    "subtitle": "منطقة مخصصة للمسؤولين فقط. سجّل الدخول باستخدام بيانات اعتماد مسؤول Fanda.",
+    "email": "البريد الإلكتروني للمسؤول",
+    "emailPlaceholder": "admin@example.com",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول كمسؤول",
+    "submitting": "جارٍ تسجيل الدخول...",
+    "riderSignIn": "تسجيل دخول الفرسان",
+    "backHome": "العودة للرئيسية"
+  }
+  }
+
+}

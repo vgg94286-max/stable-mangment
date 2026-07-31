@@ -32,22 +32,31 @@ function BarnRangeRow({ barn }: { barn: string }) {
   const [isPending, startTransition] = useTransition()
 
   function handleApply() {
-    const val = parseInt(maxNumber, 10)
-    if (isNaN(val) || val < 1) {
-      toast.error('Please enter a valid number greater than 0.')
+  const val = parseInt(maxNumber, 10)
+
+  if (isNaN(val) || val < 1) {
+    toast.error('Please enter a valid number greater than 0.')
+    return
+  }
+
+  if (val > 50) {
+    toast.error('Maximum stable number is 50.')
+    return
+  }
+
+  startTransition(async () => {
+    const res = await setBarnVisibleRange(barn, val)
+    if (!res.ok) {
+      toast.error(res.error || 'Failed to update barn range.')
       return
     }
+    toast.success(`Barn ${barn} updated. Stables 1-${val} are now active.`)
+    setMaxNumber('')
+  })
+}
 
-    startTransition(async () => {
-      const res = await setBarnVisibleRange(barn, val)
-      if (!res.ok) {
-        toast.error(res.error || 'Failed to update barn range.')
-        return
-      }
-      toast.success(`Barn ${barn} updated. Stables 1-${val} are now active.`)
-      setMaxNumber('') // Clear input on success
-    })
-  }
+const value = parseInt(maxNumber, 10)
+const isValid = !isNaN(value) && value >= 1 && value <= 50
 
   return (
     <Card>
@@ -66,9 +75,9 @@ function BarnRangeRow({ barn }: { barn: string }) {
             disabled={isPending}
             className="flex-1"
           />
-          <Button onClick={handleApply} disabled={isPending || !maxNumber}>
-            {isPending ? 'Saving...' : 'Apply'}
-          </Button>
+          <Button onClick={handleApply} disabled={isPending || !isValid}>
+  {isPending ? 'Saving...' : 'Apply'}
+</Button>
         </div>
       </CardContent>
     </Card>

@@ -48,8 +48,8 @@ export async function consumeOtp(
 }
 
 const SUBJECTS: Record<OtpPurpose, string> = {
-  verify: 'Verify your SEPF Stable Management account',
-  reset: 'Reset your SEPF Stable Management password',
+  verify: 'Verify your Fanda Stable Management account',
+  reset: 'Reset your Fanda Stable Management password',
 }
 
 function emailHtml(code: string, purpose: OtpPurpose) {
@@ -76,7 +76,7 @@ export async function sendOtpEmail(
   purpose: OtpPurpose,
 ) {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM || 'SEPF <onboarding@resend.dev>'
+  const from = process.env.EMAIL_FROM || 'Fanda <onboarding@resend.dev>'
 
   
 

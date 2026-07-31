@@ -10,15 +10,22 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/submit-button'
+import { useParams } from 'next/navigation';
+import { useDictionary } from '@/context/dictionary-context'
+
 
 const initial: ActionState = {}
 
 export function VerifyForm({ email }: { email: string }) {
+   const  { dictionary, lang } = useDictionary()
+    const { common, verify } = dictionary.auth
   const [state, action] = useActionState(verifyEmailAction, initial)
   const [resendState, resendAction] = useActionState(
     resendVerificationAction,
     initial,
   )
+  const params = useParams()
+  const lango = params.lang  
 
   useEffect(() => {
     if (state.error) toast.error(state.error)
@@ -34,7 +41,7 @@ export function VerifyForm({ email }: { email: string }) {
       <form action={action} className="flex flex-col gap-4">
         <input type="hidden" name="email" value={email} />
         <div className="flex flex-col gap-2">
-          <Label htmlFor="code">Verification code</Label>
+          <Label htmlFor="code">{lango}</Label>
           <Input
             id="code"
             name="code"
@@ -42,18 +49,18 @@ export function VerifyForm({ email }: { email: string }) {
             autoComplete="one-time-code"
             required
             maxLength={6}
-            placeholder="6-digit code"
+            placeholder={verify.codePlaceholder}
             className="text-center text-lg tracking-[0.5em]"
           />
         </div>
-        <SubmitButton className="w-full" pendingText="Verifying...">
-          Verify email
+        <SubmitButton className="w-full" pendingText={verify.submitting}>
+          {verify.submit}
         </SubmitButton>
       </form>
       <form action={resendAction}>
         <input type="hidden" name="email" value={email} />
-        <SubmitButton variant="ghost" className="w-full" pendingText="Sending...">
-          Resend code
+        <SubmitButton variant="ghost" className="w-full" pendingText={verify.resending}>
+          {verify.resend}
         </SubmitButton>
       </form>
     </div>

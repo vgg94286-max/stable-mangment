@@ -11,10 +11,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/submit-button'
+import { useDictionary } from '@/context/dictionary-context'
 
 const initial: ActionState = {}
 
 export function ResetPasswordForm() {
+
+   const {dictionary, lang} = useDictionary()
+      const { common, resetPassword } = dictionary.auth
   const router = useRouter()
   const [step, setStep] = useState<'request' | 'reset'>('request')
   const [email, setEmail] = useState('')
@@ -40,7 +44,7 @@ export function ResetPasswordForm() {
   useEffect(() => {
     if (resetState.success) {
       toast.success(resetState.success)
-      router.push('/login')
+      router.push(`/${lang}/login`)
     }
     if (resetState.error) toast.error(resetState.error)
   }, [resetState, router])
@@ -49,7 +53,7 @@ export function ResetPasswordForm() {
     return (
       <form action={requestFormAction} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{common.email}</Label>
           <Input
             id="email"
             name="email"
@@ -59,8 +63,8 @@ export function ResetPasswordForm() {
             placeholder="you@example.com"
           />
         </div>
-        <SubmitButton className="mt-2 w-full" pendingText="Sending code...">
-          Send reset code
+        <SubmitButton className="mt-2 w-full" pendingText={resetPassword.submitting}>
+          {resetPassword.submit}
         </SubmitButton>
       </form>
     )
@@ -78,7 +82,7 @@ export function ResetPasswordForm() {
           autoComplete="one-time-code"
           required
           maxLength={6}
-          placeholder="6-digit code"
+          placeholder={resetPassword.codePlaceholder}
           className="text-center text-lg tracking-[0.5em]"
         />
       </div>
@@ -94,7 +98,7 @@ export function ResetPasswordForm() {
         />
       </div>
       <SubmitButton className="mt-2 w-full" pendingText="Resetting...">
-        Reset password
+        {resetPassword.submit}
       </SubmitButton>
     </form>
   )
