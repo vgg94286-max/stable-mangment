@@ -171,40 +171,49 @@ export function BookingFlow({
     rafId = requestAnimationFrame(scrollLoop)
 
     function onMove(e: PointerEvent) {
-      setGhostPos({ x: e.clientX, y: e.clientY })
+  setGhostPos({ x: e.clientX, y: e.clientY })
 
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-      const cellEl = el?.closest<HTMLElement>('[data-stable-id]') ?? null
+  const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+  const cellEl = el?.closest<HTMLElement>('[data-stable-id]') ?? null
 
-      if (hoveredCellRef.current && hoveredCellRef.current !== cellEl) {
-        clearHover()
-      }
-      if (cellEl && !(cellEl as HTMLButtonElement).disabled) {
-        cellEl.classList.add('ring-2', 'ring-primary', 'ring-offset-1')
-        hoveredCellRef.current = cellEl
-      }
+  if (hoveredCellRef.current && hoveredCellRef.current !== cellEl) {
+    clearHover()
+  }
+  if (cellEl && !(cellEl as HTMLButtonElement).disabled) {
+    cellEl.classList.add('ring-2', 'ring-primary', 'ring-offset-1')
+    hoveredCellRef.current = cellEl
+  }
 
-      const container = gridScrollRef.current
-      if (!container) {
-        scrollSpeed = 0
-        return
-      }
-      const rect = container.getBoundingClientRect()
-      const threshold = 60
-      const distToTop = e.clientY - rect.top
-      const distToBottom = rect.bottom - e.clientY
-      // Only auto-scroll while roughly over the container horizontally, so dragging off
-      // to an unrelated part of the screen at the same height doesn't keep it scrolling.
-      const withinX = e.clientX > rect.left - 40 && e.clientX < rect.right + 40
+  const container = gridScrollRef.current
+  if (!container) {
+    scrollSpeed = 0
+    return
+  }
 
-      if (withinX && distToTop < threshold) {
-        scrollSpeed = -(8 + Math.min(1, Math.max(0, 1 - distToTop / threshold)) * 16)
-      } else if (withinX && distToBottom < threshold) {
-        scrollSpeed = 8 + Math.min(1, Math.max(0, 1 - distToBottom / threshold)) * 16
-      } else {
-        scrollSpeed = 0
-      }
-    }
+  const rect = container.getBoundingClientRect()
+
+  // The grid's real bottom edge can sit below the dialog's own visible area
+  // (DialogContent scrolls independently), so the pointer may never be able
+  // to get near rect.bottom. Clamp to the dialog's visible bounds so the
+  // trigger zone is always reachable.
+  const dialogEl = container.closest<HTMLElement>('[role="dialog"]')
+  const dialogRect = dialogEl?.getBoundingClientRect()
+  const boundsTop = dialogRect ? Math.max(rect.top, dialogRect.top) : rect.top
+  const boundsBottom = dialogRect ? Math.min(rect.bottom, dialogRect.bottom) : rect.bottom
+
+  const threshold = 60
+  const distToTop = e.clientY - boundsTop
+  const distToBottom = boundsBottom - e.clientY
+  const withinX = e.clientX > rect.left - 40 && e.clientX < rect.right + 40
+
+  if (withinX && distToTop < threshold) {
+    scrollSpeed = -(8 + Math.min(1, Math.max(0, 1 - distToTop / threshold)) * 16)
+  } else if (withinX && distToBottom < threshold) {
+    scrollSpeed = 8 + Math.min(1, Math.max(0, 1 - distToBottom / threshold)) * 16
+  } else {
+    scrollSpeed = 0
+  }
+}
 
     function onUp(e: PointerEvent) {
       const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null

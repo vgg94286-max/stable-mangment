@@ -124,6 +124,7 @@ export function StableCell({
   )
 }
 
+
 export function StableGrid({
   items,
   onCellClick,
@@ -148,6 +149,11 @@ export function StableGrid({
   const measureRef = useRef<HTMLDivElement>(null)
   const cols = useColumnCount(measureRef)
   const t = dict.stableGrid
+
+  const setScrollRefs = useCallback((el: HTMLDivElement | null) => {
+  scrollRef.current = el
+  if (scrollContainerRef) scrollContainerRef.current = el
+}, [scrollContainerRef])
 
   const barns = useMemo(
     () => Array.from(new Set(items.map((i) => i.barn))).sort(),
@@ -240,10 +246,7 @@ export function StableGrid({
 
       <div ref={measureRef} className="w-full">
        <div
-    ref={(el) => {
-      scrollRef.current = el
-      if (scrollContainerRef) scrollContainerRef.current = el
-    }}
+    ref={setScrollRefs}
     data-stable-scroll-container=""
     className="h-[55vh] min-h-[350px] sm:h-[500px] overflow-auto rounded-lg border border-border bg-background/40 p-3"
   >
