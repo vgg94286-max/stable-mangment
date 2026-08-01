@@ -29,7 +29,6 @@
       "backToLogin": "Back to sign in",
       "or": "or"
     },
-
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to access your stable reservations and manage your horses.",
@@ -37,11 +36,10 @@
       "passwordPlaceholder": "Your password",
       "submit": "Sign in",
       "submitting": "Signing in...",
-       "footer": "New rider?",
-  "footerLink": "Create an account",
-  "backHome": "← Back to Home"
+      "footer": "New rider?",
+      "footerLink": "Create an account",
+      "backHome": "← Back to Home"
     },
-
     "register": {
       "title": "Create your account",
       "subtitle": "Register to book stables, manage your horses, and access your rider dashboard.",
@@ -55,7 +53,6 @@
       "footerLink": "Sign in",
       "backHome": "← Back to Home"
     },
-
     "verify": {
       "title": "Verify your email",
       "subtitle": "Enter the 6-digit verification code sent to your email.",
@@ -65,7 +62,6 @@
       "resend": "Resend code",
       "resending": "Sending..."
     },
-
     "forgotPassword": {
       "title": "Reset your password",
       "subtitle": "Enter your email and we'll send you a verification code.",
@@ -74,7 +70,6 @@
       "submitting": "Sending code...",
       "backHome": "← Back to Home"
     },
-
     "resetPassword": {
       "title": "Create a new password",
       "subtitle": "Enter the reset code and choose a new password.",
@@ -85,18 +80,279 @@
       "submitting": "Resetting..."
     },
     "adminLogin": {
-    "title": "Administrator access",
-    "subtitle": "Restricted area. Sign in with your Fanda administrator credentials.",
-    "email": "Administrator email",
-    "emailPlaceholder": "admin@example.com",
-    "password": "Password",
-    "submit": "Sign in as administrator",
-    "submitting": "Signing in...",
-    "riderSignIn": "Rider sign in",
-    "backHome": "Back to Home"
+      "title": "Administrator access",
+      "subtitle": "Restricted area. Sign in with your Fanda administrator credentials.",
+      "email": "Administrator email",
+      "emailPlaceholder": "admin@example.com",
+      "password": "Password",
+      "submit": "Sign in as administrator",
+      "submitting": "Signing in...",
+      "riderSignIn": "Rider sign in",
+      "backHome": "Back to Home"
+    }
+  },
+  "appHeader": {
+    "title": "Fanda Stable Management",
+    "admin": "Administrator",
+    "rider": "Rider Portal",
+    "signOut": "Sign out"
+  },
+  "stableGrid": {
+    "searchPlaceholder": "Search stable, horse, or rider",
+    "searchLabel": "Search stables",
+    "barn": "Barn",
+    "blocked": "Blocked",
+    "available": "Available",
+    "occupied": "Occupied",
+    "noResults": "No stables match your search."
+  },
+  "riderReservations": {
+    "emptyTitle": "No active reservations",
+    "emptyDescription": "Reserve a stable to see it listed here.",
+    "stable": "Stable",
+    "release": "Release",
+    "cancelError": "Could not cancel.",
+    "cancelSuccess": "Reservation for {{label}} cancelled."
+  },
+  "riderDirectory": {
+    "searchPlaceholder": "Search riders by name, email, phone",
+    "searchLabel": "Search riders",
+    "noResults": "No riders found.",
+    "joined": "Joined",
+    "horses": "horses",
+    "active": "active"
+  },
+  "riderDetails": {
+    "button": "Details",
+    "title": "{{name}}'s Horses",
+    "loading": "Loading...",
+    "empty": "No horses found.",
+    "internationalId": "International ID",
+    "notAvailable": "N/A"
+  },
+  "bookingFlow": {
+    "button": "Reserve a Stable",
+    "steps": {
+      "horseTitle": "Step 1 of 3: Select a Horse",
+      "stableTitle": "Step 2 of 3: Choose a Stable",
+      "confirmTitle": "Step 3 of 3: Confirm Reservation",
+      "horseDescription": "Select an existing horse or add a new one below.",
+      "stableDescription": "Drag your horse to an available stable, or tap a stable.",
+      "confirmDescription": "Review details and add an optional note."
+    },
+    "horse": {
+      "existing": "My Existing Horses",
+      "addNew": "Add New Horse",
+      "orAdd": "Or add new horse",
+      "name": "Horse Name",
+      "namePlaceholder": "Najm",
+      "internationalId": "International ID",
+      "internationalIdPlaceholder": "123456789",
+      "type": "Type",
+      "typePlaceholder": "Select type",
+      "continue": "Continue to Select Stable",
+      "saving": "Saving...",
+      "validation": "Please select an existing horse or fill out the new horse form.",
+      "saveError": "Could not save horse.",
+      "saveSuccess": "Horse saved."
+    },
+    "stable": {
+      "back": "Back to Horses",
+      "selectedHorse": "Selected Horse",
+      "dragHint": "Drag me to a stable below",
+      "unavailable": "Stable {{label}} is unavailable.",
+      "occupied": "Stable {{label}} is already occupied."
+    },
+    "confirm": {
+      "horse": "Horse",
+      "stable": "Stable",
+      "barn": "Barn",
+      "note": "Note for Admin (Optional)",
+      "notePlaceholder": "Any specific requests?",
+      "cancel": "Cancel",
+      "confirm": "Confirm Reservation",
+      "confirming": "Confirming...",
+      "reservationSuccess": "Stable {{label}} reserved.",
+      "reservationError": "Reservation failed."
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "description": "Oversee stable occupancy, reassign horses, and manage riders.",
+    "totalStables": "Total stables",
+    "occupied": "Occupied",
+    "available": "Available",
+    "occupancy": "Occupancy",
+    "tabs": {
+      "grid": "Stable grid",
+      "riders": "Riders",
+      "barns": "Barn range",
+      "audit": "Activity Log"
+    },
+    "docs": {
+      "stablePlan": "Stable Plan",
+      "stablePlanDesc": "Upload Facility Rules or Map.",
+      "locationPhoto": "Location Photo",
+      "locationPhotoDesc": "Upload location photo.",
+      "feiSchedule": "FEI Schedule",
+      "feiScheduleDesc": "Upload FEI Schedule."
+    }
+  },
+  "stableDocument": {
+    "view": "View Official Document",
+    "empty": "No document is available at the moment."
+  },
+  "locationModal": {
+    "defaultName": "Facility Location",
+    "noImage": "No location photo is available at the moment.",
+    "openMaps": "Open in Google Maps"
+  },
+  "adminGrid": {
+    "legend": {
+      "type": "Type",
+      "available": "Available"
+    },
+    "bulk": {
+      "button": "Bulk Manage Barns",
+      "title": "Bulk Manage Barns",
+      "description": "Select multiple barns to block or unblock at once. Occupied stables will not be blocked.",
+      "barn": "Barn {{barn}}",
+      "block": "Block Selected",
+      "unblock": "Unblock Selected",
+      "successBlock": "Selected barns blocked successfully.",
+      "successUnblock": "Selected barns unblocked successfully.",
+      "error": "Bulk update failed."
+    },
+    "moveMode": {
+      "description": "Select an available stable to move {{horse}}, or select an occupied stable to swap.",
+      "cancel": "Cancel Move/Swap"
+    },
+    "dialog": {
+      "title": "Stable {{label}}",
+      "occupiedDescription": "Manage this reservation.",
+      "availableDescription": "Manage this stable.",
+      "horse": "Horse",
+      "type": "Type",
+      "rider": "Rider",
+      "moveHorse": "Move Horse",
+      "releaseStable": "Release Stable",
+      "block": "Block Stable",
+      "unblock": "Unblock Stable"
+    },
+    "toast": {
+      "cannotBlock": "You cannot block an occupied stable. Release it first.",
+      "updateFailed": "Update failed.",
+      "moveFailed": "Move failed.",
+      "swapFailed": "Swap failed.",
+      "releaseFailed": "Could not release.",
+      "stableBlocked": "Stable {{label}} is now blocked.",
+      "stableAvailable": "Stable {{label}} is now available.",
+      "moved": "{{horse}} moved to {{stable}}.",
+      "swapped": "{{horse1}} swapped with {{horse2}}.",
+      "released": "Stable {{label}} released."
+    }
+  },
+  "activityLog": {
+    "all": "All Actions",
+    "move": "Move Stable",
+    "swap": "Swap Stables",
+    "release": "Release Stable",
+    "uploads": "File Uploads",
+    "empty": "No recent activity found."
+  },
+  "adminLocation": {
+    "title": "Facility Location (Google Maps)",
+    "description": "Enter a Google Maps share link to help riders navigate to the facility.",
+    "placeholder": "https://maps.app.goo.gl/...",
+    "save": "Save Link",
+    "errors": {
+      "empty": "Please enter a valid link.",
+      "invalid": "Invalid URL format. Please enter a valid Google Maps link.",
+      "save": "Failed to save location."
+    },
+    "success": "Facility location link updated."
+  },
+  "adminPhone": {
+    "title": "Administration Contact Phone Number",
+    "description": "This phone number will be displayed on the rider dashboard for direct contact.",
+    "placeholder": "+966 5X XXX XXXX",
+    "save": "Save Number",
+    "success": "Admin phone number updated successfully.",
+    "error": "Failed to update phone number."
+  },
+  "barnRange": {
+    "empty": "No barns found.",
+    "title": "Barn {{barn}}",
+    "description": "Limit visible stables for riders.",
+    "placeholder": "Maximum stable number",
+    "save": "Apply",
+    "saving": "Saving...",
+    "errors": {
+      "invalid": "Please enter a valid number greater than 0.",
+      "maximum": "Maximum stable number is 50.",
+      "update": "Failed to update barn range."
+    },
+    "success": "Barn {{barn}} updated. Stables 1-{{max}} are now active."
+  },
+  "documentManager": {
+    "viewDocument": "View Current Document",
+    "viewImage": "View Current Image",
+    "empty": "No file currently uploaded.",
+    "deleteSuccess": "{{title}} deleted successfully.",
+    "deleteError": "Failed to delete: {{error}}",
+    "updateSuccess": "{{title}} updated successfully.",
+    "databaseError": "File uploaded, but failed to save to database.",
+    "uploadError": "Upload failed: {{error}}"
+  },
+  "adminPage": {
+    "title": "Administration",
+    "subtitle": "Oversee stable occupancy, reassign horses, and manage riders.",
+    "stats": {
+      "totalStables": "Total stables",
+      "occupied": "Occupied",
+      "available": "Available",
+      "occupancy": "Occupancy"
+    },
+    "tabs": {
+      "grid": "Stable Grid",
+      "riders": "Riders",
+      "barns": "Barn Settings",
+      "audit": "Activity Log"
+    },
+    "documents": {
+      "stablePlan": {
+        "title": "Stable Plan",
+        "description": "Upload the facility map or stable plan."
+      },
+      "locationPhoto": {
+        "title": "Facility Location Photo",
+        "description": "Upload a photo showing the facility location."
+      },
+      "feiSchedule": {
+        "title": "FEI Schedule",
+        "description": "Upload the official FEI schedule."
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "contactAdmin": "Contact Admin",
+    "description": "Manage your horses, view documents, and reserve stables.",
+    "documents": "Documents",
+    "stablePlan": "Stable Plan",
+    "facilityLocation": "Facility Location",
+    "feiSchedule": "FEI Schedule",
+    "yourHorses": "Your horses",
+    "yourReservations": "Your reservations",
+    "availableStables": "Available stables",
+    "reservationsHeading": "Your reservations",
+    "stats": {
+      "horses": "Your Horses",
+      "reservations": "Your Reservations",
+      "availableStables": "Available Stables"
+    },
+    "reservations": {
+      "title": "Your Reservations"
+    }
   }
-
-  }
-  
-
 }

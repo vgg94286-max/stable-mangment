@@ -9,25 +9,34 @@ import { Card } from '@/components/ui/card'
 import { MapPin, X } from 'lucide-react'
 import { cancelReservation } from '@/app/actions/stables'
 import type { ReservationDetail } from '@/lib/db'
-
 import { GENDER_META, type GenderType } from '@/lib/horse-types'
+import { useDictionary } from '@/context/dictionary-context'
+
+
+function formatMessage(str: string, vars: Record<string, string | number>) {
+  return str.replace(/\{\{(\w+)\}\}/g, (_, key) => String(vars[key] ?? ''))
+}
 
 export function RiderReservations({
   reservations,
+  dict,
 }: {
   reservations: ReservationDetail[]
+  dict: any
 }) {
   const router = useRouter()
+   const { dictionary , lang} = useDictionary()
   const [isPending, startTransition] = useTransition()
+  const t = dict.riderReservations
 
   function handleCancel(id: number, label: string) {
     startTransition(async () => {
-      const res = await cancelReservation(id)
+      const res = await cancelReservation(id,lang)
       if (!res.ok) {
-        toast.error(res.error || 'Could not cancel.')
+        toast.error(res.error || t.cancelError)
         return
       }
-      toast.success(`Reservation for ${label} cancelled.`)
+      toast.success(formatMessage(t.cancelSuccess, { label }))
       router.refresh()
     })
   }
@@ -36,9 +45,9 @@ export function RiderReservations({
     return (
       <Card className="flex flex-col items-center justify-center gap-2 border-dashed p-10 text-center">
         <MapPin className="size-8 text-muted-foreground" aria-hidden />
-        <p className="font-medium text-foreground">No active reservations</p>
+        <p className="font-medium text-foreground">{t.emptyTitle}</p>
         <p className="text-sm text-muted-foreground">
-          Reserve a stable to see it listed here.
+          {t.emptyDescription}
         </p>
       </Card>
     )
@@ -57,7 +66,7 @@ export function RiderReservations({
                 </span>
                 <div className="flex flex-col leading-tight">
                   <span className="font-semibold text-foreground">
-                    Stable {r.stable_label}
+                    {t.stable} {r.stable_label}
                   </span>
                   <span className="text-sm text-muted-foreground">{r.horse_name}</span>
                 </div>
@@ -76,7 +85,7 @@ export function RiderReservations({
               onClick={() => handleCancel(r.reservation_id, r.stable_label)}
             >
               <X className="size-4" aria-hidden />
-              Release
+              {t.release}
             </Button>
           </Card>
         )

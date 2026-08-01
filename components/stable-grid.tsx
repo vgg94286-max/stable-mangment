@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Search , StickyNote} from 'lucide-react'
+import { Search, StickyNote } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { StableGridItem } from '@/lib/db'
@@ -41,78 +41,83 @@ function useColumnCount(ref: React.RefObject<HTMLDivElement | null>) {
   return cols
 }
 
+function formatMessage(str: string, vars: Record<string, string | number>) {
+  return str.replace(/\{\{(\w+)\}\}/g, (_, key) => String(vars[key] ?? ''))
+}
+
 export function StableCell({
   item,
   onClick,
   selected,
-  isAdmin, // <-- 1. Add isAdmin prop
-  onDropHorse
+  isAdmin,
+  onDropHorse,
+  dict,
 }: {
-  item: StableGridItem 
+  item: StableGridItem
   onClick?: (item: StableGridItem) => void
   selected?: boolean
-  isAdmin?: boolean 
-  onDropHorse?: (stableId: number, horseId: number) => void
+  isAdmin?: boolean
+  // Drop targeting is now done by the parent via pointer events + document.elementFromPoint
+  // (see booking-flow.tsx), reading `data-stable-id` below. This prop is kept so any
+  // existing callers still type-check; it's no longer wired to native onDragOver/onDrop,
+  // since native HTML5 drag-and-drop breaks whenever an ancestor (e.g. a shadcn Dialog)
+  // has a CSS transform.
+  onDropHorse?: (stableId: number) => void
+  dict: any
 }) {
   const occupied = item.status === 'occupied'
   const blocked = !item.is_active
-  
   const meta = item.gender ? GENDER_META[item.gender as GenderType] : null
-
-  // 2. Disable if no onClick is provided OR if it's a rider trying to click a blocked/occupied stable.
-  // Admins bypass the blocked/occupied restriction.
-  const isDisabled = !onClick && !onDropHorse || (!isAdmin && (blocked || occupied))
+  const isDisabled = !onClick || (!isAdmin && (blocked || occupied))
+  const t = dict.stableGrid
 
   return (
     <button
       type="button"
+      data-stable-id={item.id}
       onClick={() => onClick?.(item)}
-      onDragOver={(e: React.DragEvent<HTMLButtonElement>) => {
-        if (isDisabled || !onDropHorse) return
-        e.preventDefault() // Required to allow dropping
-      }}
-      onDrop={(e: React.DragEvent<HTMLButtonElement>) => {
-        if (isDisabled || !onDropHorse) return
-        e.preventDefault()
-        const horseId = e.dataTransfer.getData('horseId')
-        if (horseId) onDropHorse(item.id, parseInt(horseId, 10))
-      }}
-      disabled={isDisabled} 
+      disabled={isDisabled}
       aria-label={`Stable ${item.label}`}
       className={cn(
         'flex h-[68px] flex-col items-start justify-center gap-0.5 rounded-lg border px-2.5 py-1.5 text-left transition-colors',
-        blocked 
-          ? 'bg-muted/50 border-dashed border-muted-foreground/30 opacity-60' 
+        blocked
+          ? 'bg-muted/50 border-dashed border-muted-foreground/30 opacity-60'
           : occupied
-            ? meta 
-              ? cn(meta.cell, meta.text) 
-              : 'bg-muted/60 text-muted-foreground border-border' 
+            ? meta
+              ? cn(meta.cell, meta.text)
+              : 'bg-muted/60 text-muted-foreground border-border'
             : 'border-border bg-card hover:border-primary/50 hover:bg-secondary',
         selected && 'ring-2 ring-primary ring-offset-1',
-        isDisabled && 'cursor-not-allowed opacity-80' // Add visual cue for disabled state
+        isDisabled && 'cursor-not-allowed opacity-80',
       )}
     >
       <div className="flex w-full items-center justify-between">
         <span className="text-sm font-semibold leading-none">{item.label}</span>
-        {/* Admin note indicator */}
         {isAdmin && item.note ? (
-          <StickyNote className="size-3 text-muted-foreground" />
+          <StickyNote
+            className="size-3 text-muted-foreground"
+            aria-label={item.note}
+          >
+            <title>{item.note}</title>
+          </StickyNote>
         ) : null}
       </div>
       {blocked ? (
         <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
-          Blocked
+          {t.blocked}
         </span>
       ) : occupied ? (
-        <span className={cn(
-          "mt-0.5 line-clamp-1 w-full text-[11px] leading-tight",
-          !meta && "opacity-70 font-medium" 
-        )}>
-          {item.horse_name || 'Occupied'}
+        <span
+          className={cn(
+            'mt-0.5 line-clamp-1 w-full text-[11px] leading-tight',
+            !meta && 'font-medium opacity-70',
+          )}
+        >
+          {item.horse_name || t.occupied}
         </span>
       ) : (
         <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
-          Available
+          {t.available}
         </span>
       )}
     </button>
@@ -126,18 +131,21 @@ export function StableGrid({
   toolbar,
   isAdmin,
   onDropHorse,
+  dict,
 }: {
   items: StableGridItem[]
   onCellClick?: (item: StableGridItem) => void
   selectedStableId?: number | null
   toolbar?: ReactNode
-  isAdmin?: boolean // <-- 1. Add isAdmin prop
-  onDropHorse?: (stableId: number, horseId: number) => void
+  isAdmin?: boolean
+  onDropHorse?: (stableId: number) => void
+  dict: any
 }) {
   const [query, setQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const cols = useColumnCount(measureRef)
+  const t = dict.stableGrid
 
   const barns = useMemo(
     () => Array.from(new Set(items.map((i) => i.barn))).sort(),
@@ -155,7 +163,6 @@ export function StableGrid({
     )
   }, [items, query])
 
-  // Build a flat list of "rows": each row is either a barn header or a set of cells.
   type Row =
     | { kind: 'header'; barn: string }
     | { kind: 'cells'; cells: StableGridItem[] }
@@ -177,7 +184,6 @@ export function StableGrid({
     return out
   }, [filtered, cols])
 
-  // Map each barn to its row index for jump navigation.
   const barnRowIndex = useMemo(() => {
     const map = new Map<string, number>()
     rows.forEach((r, idx) => {
@@ -204,20 +210,19 @@ export function StableGrid({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full ">
+          <Search className="pointer-events-none absolute left-3 top-[28%] size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search stable, horse, or rider"
-            className="pl-9"
-            aria-label="Search stables"
+            placeholder={t.searchPlaceholder}
+            className="pl-9 h-9"
+            aria-label={t.searchLabel}
           />
         </div>
         {toolbar}
       </div>
 
-      {/* Sticky A-Z barn navigation */}
       <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-card p-2">
         {barns.map((barn) => (
           <button
@@ -234,7 +239,8 @@ export function StableGrid({
       <div ref={measureRef} className="w-full">
         <div
           ref={scrollRef}
-          className="h-[560px] overflow-auto rounded-lg border border-border bg-background/40 p-3"
+          data-stable-scroll-container=""
+          className="h-[55vh] min-h-[350px] sm:h-[500px] overflow-auto rounded-lg border border-border bg-background/40 p-3"
         >
           <div
             style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
@@ -260,7 +266,7 @@ export function StableGrid({
                         {row.barn}
                       </span>
                       <span className="text-sm font-medium text-foreground">
-                        Barn {row.barn}
+                        {formatMessage(t.barn, { barn: row.barn })}
                       </span>
                     </div>
                   ) : (
@@ -275,6 +281,8 @@ export function StableGrid({
                           onClick={onCellClick}
                           selected={selectedStableId === cell.id}
                           isAdmin={isAdmin}
+                          onDropHorse={onDropHorse}
+                          dict={dict}
                         />
                       ))}
                     </div>
@@ -288,7 +296,7 @@ export function StableGrid({
 
       {filtered.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          No stables match your search.
+          {t.noResults}
         </p>
       ) : null}
     </div>

@@ -8,8 +8,15 @@ import { Badge } from '@/components/ui/badge'
 import type { RiderDirectoryRow } from '@/app/actions/stables'
 import { RiderDetailsDialog } from '@/components/rider-details-dialog'
 
-export function RiderDirectory({ riders }: { riders: RiderDirectoryRow[] }) {
+export function RiderDirectory({ 
+  riders,
+  dict 
+}: { 
+  riders: RiderDirectoryRow[]
+  dict: any 
+}) {
   const [query, setQuery] = useState('')
+  const t = dict.riderDirectory
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -25,19 +32,19 @@ export function RiderDirectory({ riders }: { riders: RiderDirectoryRow[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="relative w-full sm:max-w-xs">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-[28%] size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search riders by name, email, phone"
+          placeholder={t.searchPlaceholder}
           className="pl-9"
-          aria-label="Search riders"
+          aria-label={t.searchLabel}
         />
       </div>
 
       {filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No riders found.
+          {t.noResults}
         </p>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -47,16 +54,14 @@ export function RiderDirectory({ riders }: { riders: RiderDirectoryRow[] }) {
                 <div>
                   <p className="font-medium text-foreground">{r.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Joined {new Date(r.created_at).toLocaleDateString()}
+                    {t.joined} {new Date(r.created_at).toLocaleDateString()}
                   </p>
-                  
                 </div>
                 
                 <div className="flex gap-2">
-                  <Badge variant="secondary">{r.horse_count} horses</Badge>
-                  <Badge>{r.active_reservations} active</Badge>
+                  <Badge variant="secondary">{r.horse_count} {t.horses}</Badge>
+                  <Badge>{r.active_reservations} {t.active}</Badge>
                 </div>
-                
               </div>
               <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
@@ -69,7 +74,7 @@ export function RiderDirectory({ riders }: { riders: RiderDirectoryRow[] }) {
                     {r.phone}
                   </span>
                 ) : null}
-                <RiderDetailsDialog riderId={r.id} riderName={r.full_name} />
+                <RiderDetailsDialog riderId={r.id} riderName={r.full_name} dict={dict} />
               </div>
             </Card>
           ))}

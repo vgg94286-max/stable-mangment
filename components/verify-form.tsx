@@ -58,6 +58,7 @@ export function VerifyForm({ email }: { email: string }) {
         </SubmitButton>
       </form>
       <form action={resendAction}>
+        <input type="hidden" name="lang" value={lang} />
         <input type="hidden" name="email" value={email} />
         <SubmitButton variant="ghost" className="w-full" pendingText={verify.resending}>
           {verify.resend}

@@ -27,6 +27,7 @@ export default async function LoginPage({
 
   
     <AuthShell
+      params={params}
       lang={lang} 
       title={login.title}
       subtitle={login.subtitle}

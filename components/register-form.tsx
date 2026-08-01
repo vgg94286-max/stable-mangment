@@ -27,6 +27,7 @@ export function RegisterForm() {
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="lang" value={lang} />
       <div className="flex flex-col gap-2">
         <Label htmlFor="fullName">{common.fullName}</Label>
         <Input id="fullName" name="fullName" autoComplete="name" required placeholder={register.fullNamePlaceholder} />

@@ -16,6 +16,7 @@ export default async function ForgotPasswordPage({
   return (
     <DictionaryProvider dictionary={dict} lang={lang}>
     <AuthShell
+    params={params}
       title={forgotPassword.title}
       subtitle={forgotPassword.subtitle}
       footer={

@@ -23,6 +23,7 @@ export default async function VerifyPage({
 
     <DictionaryProvider dictionary={dict} lang={lang}>
     <AuthShell
+    params={params}
       title={verify.title}
       subtitle={`${verify.subtitle} ${email}`}
     >

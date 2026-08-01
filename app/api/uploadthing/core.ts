@@ -15,7 +15,7 @@ export const ourFileRouter = {
     .middleware(adminMiddleware)
     .onUploadComplete(async ({ file }) => { return { url: file.ufsUrl }; }),
     
-  timeTableDocument: f({ pdf: { maxFileSize: "4MB", maxFileCount: 1 }, image: { maxFileSize: "4MB", maxFileCount: 1 } })
+  timeTableDocument: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(adminMiddleware)
     .onUploadComplete(async ({ file }) => { return { url: file.ufsUrl }; }),
     

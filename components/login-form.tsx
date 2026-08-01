@@ -28,6 +28,7 @@ export function LoginForm() {
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="lang" value={lang} />
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">{common.email}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required placeholder={login.emailPlaceholder} />

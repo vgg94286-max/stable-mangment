@@ -13,13 +13,25 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Info } from 'lucide-react'
-// Import your types and metadata
 import { GENDER_META, type GenderType } from '@/lib/horse-types'
 
-export function RiderDetailsDialog({ riderId, riderName }: { riderId: number, riderName: string }) {
+function formatMessage(str: string, vars: Record<string, string | number>) {
+  return str.replace(/\{\{(\w+)\}\}/g, (_, key) => String(vars[key] ?? ''))
+}
+
+export function RiderDetailsDialog({ 
+  riderId, 
+  riderName,
+  dict 
+}: { 
+  riderId: number
+  riderName: string
+  dict: any
+}) {
   const [open, setOpen] = useState(false)
   const [horses, setHorses] = useState<Horse[]>([])
   const [loading, setLoading] = useState(false)
+  const t = dict.riderDetails
 
   async function handleOpenChange(isOpen: boolean) {
     setOpen(isOpen)
@@ -36,13 +48,13 @@ export function RiderDetailsDialog({ riderId, riderName }: { riderId: number, ri
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Info className="mr-2 size-4" />
-          Details
+          {t.button}
         </Button>
       </DialogTrigger>
       
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{riderName}'s Horses</DialogTitle>
+          <DialogTitle>{formatMessage(t.title, { name: riderName })}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
@@ -52,30 +64,28 @@ export function RiderDetailsDialog({ riderId, riderName }: { riderId: number, ri
         ) : (
           <div className="grid gap-2">
             {horses.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">No horses found.</p>
+              <p className="py-4 text-center text-sm text-muted-foreground">{t.empty}</p>
             ) : (
               horses.map((h) => {
-  const genderKey = (h.gender as GenderType) || 'tr'
-  const meta = GENDER_META[genderKey]
-  
-  return (
-    <div 
-      key={h.id} 
-      className={`flex items-center justify-between rounded-md border p-3 ${meta.cell}`}
-    >
-      {/* Added min-w-0 and flex-1 to constrain the text area */}
-      <div className="min-w-0 flex-1 mr-3">
-        <p className={`font-medium truncate ${meta.text}`}>{h.name}</p>
-        <p className="text-xs opacity-80 truncate">International ID: {h.international_id || 'N/A'}</p>
-      </div>
-      
-      {/* Added shrink-0 to ensure the badge stays visible */}
-      <Badge className={`${meta.dot} text-white border-transparent shrink-0`}>
-        {meta.label}
-      </Badge>
-    </div>
-  )
-})
+                const genderKey = (h.gender as GenderType) || 'tr'
+                const meta = GENDER_META[genderKey]
+                
+                return (
+                  <div 
+                    key={h.id} 
+                    className={`flex items-center justify-between rounded-md border p-3 ${meta.cell}`}
+                  >
+                    <div className="min-w-0 flex-1 mr-3">
+                      <p className={`font-medium truncate ${meta.text}`}>{h.name}</p>
+                      <p className="text-xs opacity-80 truncate">{t.internationalId}: {h.international_id || t.notAvailable}</p>
+                    </div>
+                    
+                    <Badge className={`${meta.dot} text-white border-transparent shrink-0`}>
+                      {meta.label}
+                    </Badge>
+                  </div>
+                )
+              })
             )}
           </div>
         )}

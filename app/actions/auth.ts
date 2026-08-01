@@ -77,6 +77,7 @@ export async function verifyEmailAction(
 ): Promise<ActionState> {
   const email = normalizeEmail(String(formData.get('email') || ''))
   const code = String(formData.get('code') || '').trim()
+  const lang = String(formData.get('lang') || 'en')
 
   if (!email || !code) {
     return { error: 'Enter the verification code.', email }
@@ -98,7 +99,7 @@ export async function verifyEmailAction(
 
   const user = rows[0]
   await createSession({ userId: user.id, role: user.role, name: user.full_name })
-  redirect('/dashboard')
+  redirect(`/${lang}/dashboard`)
 }
 
 export async function resendVerificationAction(
@@ -120,6 +121,7 @@ export async function loginAction(
 ): Promise<ActionState> {
   const email = normalizeEmail(String(formData.get('email') || ''))
   const password = String(formData.get('password') || '')
+  const lang = String(formData.get('lang') || 'en')
 
   if (!email || !password) {
     return { error: 'Enter your email and password.' }
@@ -152,7 +154,7 @@ export async function loginAction(
   }
 
   await createSession({ userId: user.id, role: user.role, name: user.full_name })
-  redirect(user.role === 'admin' ? '/admin' : '/dashboard')
+  redirect(user.role === 'admin' ? `/${lang}/admin` : `/${lang}/dashboard`)
 }
 
 export async function adminLoginAction(
@@ -161,6 +163,7 @@ export async function adminLoginAction(
 ): Promise<ActionState> {
   const email = normalizeEmail(String(formData.get('email') || ''))
   const password = String(formData.get('password') || '')
+  const lang = String(formData.get('lang') || 'en')
 
   const rows = (await sql`
     SELECT id, full_name, password_hash, role FROM users WHERE email = ${email}
@@ -175,7 +178,7 @@ export async function adminLoginAction(
   }
 
   await createSession({ userId: rows[0].id, role: 'admin', name: rows[0].full_name })
-  redirect('/admin')
+  redirect(`/${lang}/admin`)
 }
 
 // --- Password reset --------------------------------------------------------
@@ -185,6 +188,7 @@ export async function requestResetAction(
   formData: FormData,
 ): Promise<ActionState> {
   const email = normalizeEmail(String(formData.get('email') || ''))
+  const lang = String(formData.get('lang') || 'en')
   if (!email) return { error: 'Enter your email.' }
 
   const rows = (await sql`SELECT id FROM users WHERE email = ${email}`) as {
@@ -232,19 +236,20 @@ export async function resetPasswordAction(
 // --- Logout ----------------------------------------------------------------
 
 export async function logoutAction() {
+  
   await destroySession()
-  redirect('/')
+  redirect(`/`)
 }
 
-export async function requireRider() {
+export async function requireRider(lang: string) {
   const session = await getSession()
-  if (!session) redirect('/login')
+  if (!session) redirect(`/${lang}/login`)
   return session
 }
 
-export async function requireAdmin() {
+export async function requireAdmin(lang: string) {
   const session = await getSession()
-  if (!session) redirect('/admin/login')
-  if (session.role !== 'admin') redirect('/dashboard')
+  if (!session) redirect(`/${lang}/admin/login`)
+  if (session.role !== 'admin') redirect(`/${lang}/dashboard`)
   return session
 }

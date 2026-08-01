@@ -16,7 +16,7 @@
     },
     "footer": "Fanda — منصة إدارة الإسطبلات"
   },
-    "auth": {
+  "auth": {
     "common": {
       "email": "البريد الإلكتروني",
       "password": "كلمة المرور",
@@ -29,7 +29,6 @@
       "backToLogin": "العودة لتسجيل الدخول",
       "or": "أو"
     },
-
     "login": {
       "title": "مرحبًا بعودتك",
       "subtitle": "سجّل الدخول للوصول إلى حجوزات الإسطبلات وإدارة خيولك.",
@@ -37,11 +36,10 @@
       "passwordPlaceholder": "أدخل كلمة المرور",
       "submit": "تسجيل الدخول",
       "submitting": "جارٍ تسجيل الدخول...",
-     "footer": "فارس جديد؟",
-  "footerLink": "إنشاء حساب",
-  "backHome": "← العودة للرئيسية"
+      "footer": "فارس جديد؟",
+      "footerLink": "إنشاء حساب",
+      "backHome": "← العودة للرئيسية"
     },
-
     "register": {
       "title": "إنشاء حساب",
       "subtitle": "أنشئ حسابًا لحجز الإسطبلات وإدارة خيولك والوصول إلى لوحة الفارس.",
@@ -55,7 +53,6 @@
       "footerLink": "تسجيل الدخول",
       "backHome": "← العودة للرئيسية"
     },
-
     "verify": {
       "title": "تأكيد البريد الإلكتروني",
       "subtitle": "أدخل رمز التحقق المكوّن من 6 أرقام الذي تم إرساله إلى",
@@ -65,7 +62,6 @@
       "resend": "إعادة إرسال الرمز",
       "resending": "جارٍ الإرسال..."
     },
-
     "forgotPassword": {
       "title": "إعادة تعيين كلمة المرور",
       "subtitle": "أدخل بريدك الإلكتروني وسنرسل إليك رمز إعادة التعيين.",
@@ -74,7 +70,6 @@
       "submitting": "جارٍ إرسال الرمز...",
       "backHome": "← العودة للرئيسية"
     },
-
     "resetPassword": {
       "title": "إنشاء كلمة مرور جديدة",
       "subtitle": "أدخل رمز إعادة التعيين واختر كلمة مرور جديدة.",
@@ -85,16 +80,279 @@
       "submitting": "جارٍ إعادة التعيين..."
     },
     "adminLogin": {
-    "title": "دخول المسؤولين",
-    "subtitle": "منطقة مخصصة للمسؤولين فقط. سجّل الدخول باستخدام بيانات اعتماد مسؤول Fanda.",
-    "email": "البريد الإلكتروني للمسؤول",
-    "emailPlaceholder": "admin@example.com",
-    "password": "كلمة المرور",
-    "submit": "تسجيل الدخول كمسؤول",
-    "submitting": "جارٍ تسجيل الدخول...",
-    "riderSignIn": "تسجيل دخول الفرسان",
-    "backHome": "العودة للرئيسية"
+      "title": "دخول المسؤولين",
+      "subtitle": "منطقة مخصصة للمسؤولين فقط. سجّل الدخول باستخدام بيانات اعتماد مسؤول Fanda.",
+      "email": "البريد الإلكتروني للمسؤول",
+      "emailPlaceholder": "admin@example.com",
+      "password": "كلمة المرور",
+      "submit": "تسجيل الدخول كمسؤول",
+      "submitting": "جارٍ تسجيل الدخول...",
+      "riderSignIn": "تسجيل دخول الفرسان",
+      "backHome": "العودة للرئيسية"
+    }
+  },
+  "appHeader": {
+    "title": "إدارة الإسطبلات - Fanda",
+    "admin": "مسؤول",
+    "rider": "بوابة الفرسان",
+    "signOut": "تسجيل الخروج"
+  },
+  "stableGrid": {
+    "searchPlaceholder": "ابحث عن إسطبل أو حصان أو فارس",
+    "searchLabel": "البحث في الإسطبلات",
+    "barn": "العنبر",
+    "blocked": "محجوب",
+    "available": "متاح",
+    "occupied": "محجوز",
+    "noResults": "لا توجد إسطبلات مطابقة لبحثك."
+  },
+  "riderReservations": {
+    "emptyTitle": "لا توجد حجوزات نشطة",
+    "emptyDescription": "احجز إسطبلًا ليظهر هنا.",
+    "stable": "الإسطبل",
+    "release": "إخلاء",
+    "cancelError": "تعذر إلغاء الحجز.",
+    "cancelSuccess": "تم إلغاء حجز {{label}}."
+  },
+  "riderDirectory": {
+    "searchPlaceholder": "ابحث عن فارس بالاسم أو البريد الإلكتروني أو رقم الجوال",
+    "searchLabel": "البحث عن الفرسان",
+    "noResults": "لم يتم العثور على فرسان.",
+    "joined": "انضم في",
+    "horses": "خيول",
+    "active": "نشط"
+  },
+  "riderDetails": {
+    "button": "التفاصيل",
+    "title": "خيول {{name}}",
+    "loading": "جارٍ التحميل...",
+    "empty": "لا توجد خيول.",
+    "internationalId": "الرقم الدولي",
+    "notAvailable": "غير متوفر"
+  },
+  "bookingFlow": {
+    "button": "حجز إسطبل",
+    "steps": {
+      "horseTitle": "الخطوة 1 من 3: اختيار الحصان",
+      "stableTitle": "الخطوة 2 من 3: اختيار الإسطبل",
+      "confirmTitle": "الخطوة 3 من 3: تأكيد الحجز",
+      "horseDescription": "اختر حصانًا موجودًا أو أضف حصانًا جديدًا.",
+      "stableDescription": "اسحب حصانك إلى إسطبل متاح أو اضغط على الإسطبل.",
+      "confirmDescription": "راجع التفاصيل وأضف ملاحظة اختيارية."
+    },
+    "horse": {
+      "existing": "خيولي الحالية",
+      "addNew": "إضافة حصان جديد",
+      "orAdd": "أو أضف حصانًا جديدًا",
+      "name": "اسم الحصان",
+      "namePlaceholder": "نجم",
+      "internationalId": "الرقم الدولي",
+      "internationalIdPlaceholder": "123456789",
+      "type": "النوع",
+      "typePlaceholder": "اختر النوع",
+      "continue": "المتابعة لاختيار الإسطبل",
+      "saving": "جارٍ الحفظ...",
+      "validation": "يرجى اختيار حصان موجود أو تعبئة بيانات الحصان الجديد.",
+      "saveError": "تعذر حفظ الحصان.",
+      "saveSuccess": "تم حفظ الحصان."
+    },
+    "stable": {
+      "back": "العودة إلى الخيول",
+      "selectedHorse": "الحصان المختار",
+      "dragHint": "اسحبني إلى أحد الإسطبلات بالأسفل",
+      "unavailable": "الإسطبل {{label}} غير متاح.",
+      "occupied": "الإسطبل {{label}} محجوز بالفعل."
+    },
+    "confirm": {
+      "horse": "الحصان",
+      "stable": "الإسطبل",
+      "barn": "العنبر",
+      "note": "ملاحظة للإدارة (اختياري)",
+      "notePlaceholder": "هل لديك أي طلبات خاصة؟",
+      "cancel": "إلغاء",
+      "confirm": "تأكيد الحجز",
+      "confirming": "جارٍ التأكيد...",
+      "reservationSuccess": "تم حجز الإسطبل {{label}}.",
+      "reservationError": "فشل الحجز."
+    }
+  },
+  "admin": {
+    "title": "لوحة الإدارة",
+    "description": "إدارة إشغال الإسطبلات، ونقل الخيول، وإدارة الفرسان.",
+    "totalStables": "إجمالي الإسطبلات",
+    "occupied": "محجوز",
+    "available": "المتاحة",
+    "occupancy": "نسبة الإشغال",
+    "tabs": {
+      "grid": "شبكة الإسطبلات",
+      "riders": "الفرسان",
+      "barns": "إعدادات العنابر",
+      "audit": "سجل النشاط"
+    },
+    "docs": {
+      "stablePlan": "مخطط الإسطبلات",
+      "stablePlanDesc": "ارفع قواعد المنشأة أو خريطة المنشأة.",
+      "locationPhoto": "صورة الموقع",
+      "locationPhotoDesc": "ارفع صورة الموقع.",
+      "feiSchedule": "جدول الـ FEI",
+      "feiScheduleDesc": "ارفع جدول الـ FEI."
+    }
+  },
+  "stableDocument": {
+    "view": "عرض المستند الرسمي",
+    "empty": "لا يوجد مستند متاح حاليًا."
+  },
+  "locationModal": {
+    "defaultName": "موقع المنشأة",
+    "noImage": "لا توجد صورة للموقع حاليًا.",
+    "openMaps": "فتح في خرائط Google"
+  },
+  "adminGrid": {
+    "legend": {
+      "type": "النوع",
+      "available": "متاح"
+    },
+    "bulk": {
+      "button": "إدارة عدة عنابر",
+      "title": "إدارة عدة عنابر",
+      "description": "اختر عدة عنابر لحجبها أو إتاحتها دفعة واحدة. لن يتم حجب الإسطبلات المشغولة.",
+      "barn": "العنبر {{barn}}",
+      "block": "حجب المحدد",
+      "unblock": "إتاحة المحدد",
+      "successBlock": "تم حجب العنابر المحددة بنجاح.",
+      "successUnblock": "تمت إتاحة العنابر المحددة بنجاح.",
+      "error": "فشل تحديث العنابر."
+    },
+    "moveMode": {
+      "description": "اختر إسطبلًا متاحًا لنقل {{horse}} أو اختر إسطبلًا مشغولًا لتبديل الخيول.",
+      "cancel": "إلغاء النقل/التبديل"
+    },
+    "dialog": {
+      "title": "الإسطبل {{label}}",
+      "occupiedDescription": "إدارة هذا الحجز.",
+      "availableDescription": "إدارة هذا الإسطبل.",
+      "horse": "الحصان",
+      "type": "النوع",
+      "rider": "الفارس",
+      "moveHorse": "نقل الحصان",
+      "releaseStable": "إخلاء الإسطبل",
+      "block": "حجب الإسطبل",
+      "unblock": "إتاحة الإسطبل"
+    },
+    "toast": {
+      "cannotBlock": "لا يمكن حجب إسطبل مشغول. قم بإخلائه أولًا.",
+      "updateFailed": "فشل التحديث.",
+      "moveFailed": "فشل النقل.",
+      "swapFailed": "فشل التبديل.",
+      "releaseFailed": "تعذر إخلاء الإسطبل.",
+      "stableBlocked": "تم حجب الإسطبل {{label}}.",
+      "stableAvailable": "أصبح الإسطبل {{label}} متاحًا.",
+      "moved": "تم نقل {{horse}} إلى {{stable}}.",
+      "swapped": "تم تبديل {{horse1}} مع {{horse2}}.",
+      "released": "تم إخلاء الإسطبل {{label}}."
+    }
+  },
+  "activityLog": {
+    "all": "جميع العمليات",
+    "move": "نقل إسطبل",
+    "swap": "تبديل الإسطبلات",
+    "release": "إخلاء إسطبل",
+    "uploads": "رفع الملفات",
+    "empty": "لا يوجد نشاط حديث."
+  },
+  "adminLocation": {
+    "title": "موقع المنشأة (خرائط Google)",
+    "description": "أدخل رابط مشاركة خرائط Google لمساعدة الفرسان على الوصول إلى المنشأة.",
+    "placeholder": "https://maps.app.goo.gl/...",
+    "save": "حفظ الرابط",
+    "errors": {
+      "empty": "يرجى إدخال رابط صحيح.",
+      "invalid": "صيغة الرابط غير صحيحة. يرجى إدخال رابط خرائط Google صالح.",
+      "save": "تعذر حفظ الموقع."
+    },
+    "success": "تم تحديث رابط موقع المنشأة."
+  },
+  "adminPhone": {
+    "title": "رقم هاتف إدارة المنشأة",
+    "description": "سيظهر هذا الرقم في لوحة الفارس للتواصل المباشر مع الإدارة.",
+    "placeholder": "+966 5X XXX XXXX",
+    "save": "حفظ الرقم",
+    "success": "تم تحديث رقم الهاتف بنجاح.",
+    "error": "تعذر تحديث رقم الهاتف."
+  },
+  "barnRange": {
+    "empty": "لا توجد عنابر.",
+    "title": "العنبر {{barn}}",
+    "description": "تحديد عدد الإسطبلات الظاهرة للفرسان.",
+    "placeholder": "أقصى رقم للإسطبل",
+    "save": "تطبيق",
+    "saving": "جارٍ الحفظ...",
+    "errors": {
+      "invalid": "يرجى إدخال رقم أكبر من صفر.",
+      "maximum": "أقصى رقم للإسطبل هو 50.",
+      "update": "تعذر تحديث العنبر."
+    },
+    "success": "تم تحديث العنبر {{barn}}. أصبحت الإسطبلات من 1 إلى {{max}} متاحة."
+  },
+  "documentManager": {
+    "viewDocument": "عرض المستند الحالي",
+    "viewImage": "عرض الصورة الحالية",
+    "empty": "لا يوجد ملف مرفوع حاليًا.",
+    "deleteSuccess": "تم حذف {{title}} بنجاح.",
+    "deleteError": "فشل الحذف: {{error}}",
+    "updateSuccess": "تم تحديث {{title}} بنجاح.",
+    "databaseError": "تم رفع الملف، لكن تعذر حفظه في قاعدة البيانات.",
+    "uploadError": "فشل رفع الملف: {{error}}"
+  },
+  "adminPage": {
+    "title": "لوحة الإدارة",
+    "subtitle": "إدارة إشغال الإسطبلات، ونقل الخيول، وإدارة الفرسان.",
+    "stats": {
+      "totalStables": "إجمالي الإسطبلات",
+      "occupied": "محجوز",
+      "available": "المتاحة",
+      "occupancy": "نسبة الإشغال"
+    },
+    "tabs": {
+      "grid": "شبكة الإسطبلات",
+      "riders": "الفرسان",
+      "barns": "إعدادات العنابر",
+      "audit": "سجل النشاط"
+    },
+    "documents": {
+      "stablePlan": {
+        "title": "مخطط الإسطبلات",
+        "description": "ارفع خريطة المنشأة أو مخطط الإسطبلات."
+      },
+      "locationPhoto": {
+        "title": "صورة موقع المنشأة",
+        "description": "ارفع صورة توضّح موقع المنشأة."
+      },
+      "feiSchedule": {
+        "title": "جدول الاتحاد الدولي للفروسية (FEI)",
+        "description": "ارفع جدول الـ FEI الرسمي."
+      }
+    }
+  },
+  "dashboard": {
+   "welcome": "مرحبًا ",
+    "contactAdmin": "التواصل مع الإدارة",
+    "description": "أدِر خيولك، واطلع على المستندات، واحجز الإسطبلات.",
+    "documents": "المستندات",
+    "stablePlan": "مخطط الإسطبلات",
+    "facilityLocation": "موقع المنشأة",
+    "feiSchedule": "جدول الـ FEI",
+    "yourHorses": "خيولي",
+    "yourReservations": "حجوزاتي",
+    "availableStables": "الإسطبلات المتاحة",
+    "reservationsHeading": "حجوزاتي",
+    "stats": {
+      "horses": "خيولي",
+      "reservations": "حجوزاتي",
+      "availableStables": "الإسطبلات المتاحة"
+    },
+    "reservations": {
+      "title": "حجوزاتي"
+    }
   }
-  }
-
 }

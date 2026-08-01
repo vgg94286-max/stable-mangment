@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition , useMemo} from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -12,15 +12,19 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeftRight, X ,Ban, CheckCircle ,Layers} from 'lucide-react'
+import { ArrowLeftRight, X, Ban, CheckCircle, Layers } from 'lucide-react'
 
 import { StableGrid } from '@/components/stable-grid'
-import { cancelReservation, moveReservation,toggleStableActive,toggleBarnsActive,swapReservations } from '@/app/actions/stables'
+import { cancelReservation, moveReservation, toggleStableActive, toggleBarnsActive, swapReservations } from '@/app/actions/stables'
 import type { StableGridItem } from '@/lib/db'
 import { GENDER_META, type GenderType } from '@/lib/horse-types'
+import { useDictionary } from '@/context/dictionary-context'
 
 export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
   const router = useRouter()
+  const { dictionary , lang} = useDictionary()
+  const t = dictionary.adminGrid
+
   const [selected, setSelected] = useState<StableGridItem | null>(null)
   const [moving, setMoving] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -35,30 +39,31 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
     if (!selected) return
 
     if (selected.is_active && selected.status === 'occupied') {
-      toast.error('You cannot block an occupied stable. Release it first.')
+      toast.error(t.toast.cannotBlock)
       return
     }
     const newState = !selected.is_active
     startTransition(async () => {
-      const res = await toggleStableActive(selected.id, newState)
+      const res = await toggleStableActive(selected.id, newState, lang)
       if (!res.ok) {
-        toast.error(res.error || 'Update failed.')
+        toast.error(res.error || t.toast.updateFailed)
         return
       }
-      toast.success(`Stable ${selected.label} is now ${newState ? 'available' : 'blocked'}.`)
+      toast.success(newState ? t.toast.stableAvailable.replace('{{label}}', selected.label) : t.toast.stableBlocked.replace('{{label}}', selected.label))
       setSelected({ ...selected, is_active: newState }) // Optimistic UI update
       router.refresh()
     })
   }
+
   function handleBulkToggle(isActive: boolean) {
     if (selectedBarns.length === 0) return
     startTransition(async () => {
-      const res = await toggleBarnsActive(selectedBarns, isActive)
+      const res = await toggleBarnsActive(selectedBarns, isActive,lang)
       if (!res.ok) {
-        toast.error(res.error || 'Bulk update failed.')
+        toast.error(res.error || t.bulk.error)
         return
       }
-      toast.success(`Selected barns successfully ${isActive ? 'unblocked' : 'blocked'}.`)
+      toast.success(isActive ? t.bulk.successUnblock : t.bulk.successBlock)
       setIsBulkOpen(false)
       setSelectedBarns([])
       router.refresh()
@@ -71,7 +76,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
     )
   }
 
- function handleCellClick(item: StableGridItem) {
+  function handleCellClick(item: StableGridItem) {
     if (moving && selected) {
       // Prevent moving/swapping to the exact same stable
       if (item.id === selected.id) {
@@ -88,13 +93,14 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
             selected.reservation_id!,
             selected.id,
             item.reservation_id!,
-            item.id
+            item.id,
+            lang
           )
           if (!res.ok) {
-            toast.error(res.error || 'Swap failed.')
+            toast.error(res.error || t.toast.swapFailed)
             return
           }
-          toast.success(`Swapped ${selected.horse_name} with ${item.horse_name}.`)
+          toast.success(t.toast.swapped.replace('{{horse1}}', selected.horse_name!).replace('{{horse2}}', item.horse_name!))
           setMoving(false)
           setSelected(null)
           router.refresh()
@@ -106,12 +112,12 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
       if (item.status === 'available') {
         if (!selected.reservation_id) return
         startTransition(async () => {
-          const res = await moveReservation(selected.reservation_id!, item.id)
+          const res = await moveReservation(selected.reservation_id!, item.id,lang)
           if (!res.ok) {
-            toast.error(res.error || 'Move failed.')
+            toast.error(res.error || t.toast.moveFailed)
             return
           }
-          toast.success(`Moved ${selected.horse_name} to ${item.label}.`)
+          toast.success(t.toast.moved.replace('{{horse}}', selected.horse_name!).replace('{{stable}}', item.label))
           setMoving(false)
           setSelected(null)
           router.refresh()
@@ -127,12 +133,12 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
   function handleCancel() {
     if (!selected?.reservation_id) return
     startTransition(async () => {
-      const res = await cancelReservation(selected.reservation_id!)
+      const res = await cancelReservation(selected.reservation_id!,lang)
       if (!res.ok) {
-        toast.error(res.error || 'Could not release.')
+        toast.error(res.error || t.toast.releaseFailed)
         return
       }
-      toast.success(`Stable ${selected.label} released.`)
+      toast.success(t.toast.released.replace('{{label}}', selected.label))
       setSelected(null)
       router.refresh()
     })
@@ -143,7 +149,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-xs font-medium text-muted-foreground">Type:</span>
+          <span className="text-xs font-medium text-muted-foreground">{t.legend.type}:</span>
           {(Object.keys(GENDER_META) as GenderType[]).map((g) => (
             <span key={g} className="flex items-center gap-1.5 text-xs text-foreground">
               <span className={`size-3 rounded-full ${GENDER_META[g].dot}`} />
@@ -152,20 +158,22 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
           ))}
           <span className="flex items-center gap-1.5 text-xs text-foreground">
             <span className="size-3 rounded-full border border-border bg-card" />
-            Available
+            {t.legend.available}
           </span>
         </div>
         
         {/* Bulk Action Button */}
         <Button variant="outline" size="sm" onClick={() => setIsBulkOpen(true)}>
-          <Layers className="mr-2 size-4" /> Bulk Manage Barns
+          <Layers className="mr-2 size-4" /> {t.bulk.button}
         </Button>
       </div>
 
       {moving && selected ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-primary bg-primary/5 p-3">
           <p className="text-sm text-foreground">
-            Select an available stable to move <strong>{selected.horse_name}</strong>, or select an occupied stable to swap.
+            {t.moveMode.description.split('{{horse}}')[0]}
+            <strong>{selected.horse_name}</strong>
+            {t.moveMode.description.split('{{horse}}')[1]}
           </p>
           <Button
             variant="ghost"
@@ -175,7 +183,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
               setSelected(null)
             }}
           >
-            Cancel move/swap
+            {t.moveMode.cancel}
           </Button>
         </div>
       ) : null}
@@ -185,6 +193,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
         onCellClick={handleCellClick}
         selectedStableId={moving ? selected?.id : null}
         isAdmin={true}
+         dict={dictionary}
       />
 
       <Dialog
@@ -193,11 +202,11 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Stable {selected?.label}</DialogTitle>
+            <DialogTitle>{t.dialog.title.replace('{{label}}', selected?.label || '')}</DialogTitle>
             <DialogDescription>
               {selected?.status === 'occupied' 
-                ? 'Manage this reservation.' 
-                : 'Manage this stable.'}
+                ? t.dialog.occupiedDescription 
+                : t.dialog.availableDescription}
             </DialogDescription>
           </DialogHeader>
           
@@ -209,14 +218,14 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                 <>
                   <div className="rounded-lg border border-border p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Horse</span>
+                      <span className="text-sm text-muted-foreground">{t.dialog.horse}</span>
                       <span className="font-medium text-foreground">
                         {selected.horse_name}
                       </span>
                     </div>
                     
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Type</span>
+                      <span className="text-sm text-muted-foreground">{t.dialog.type}</span>
                       {selected.gender ? (
                         <Badge variant="secondary" className="gap-1.5">
                           <span className={`size-2 rounded-full ${GENDER_META[selected.gender as GenderType].dot}`} />
@@ -226,11 +235,22 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                     </div>
                     
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Rider</span>
+                      <span className="text-sm text-muted-foreground">{t.dialog.rider}</span>
                       <span className="font-medium text-foreground">
                         {selected.rider_name}
                       </span>
                     </div>
+
+                    {selected.note ? (
+                      <div className="mt-2 border-t border-border pt-2">
+                        <span className="text-sm text-muted-foreground">
+                          {t.dialog.note ?? 'Note'}
+                        </span>
+                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm text-foreground">
+                          {selected.note}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                   
                   <div className="flex gap-2">
@@ -241,7 +261,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                       onClick={() => setMoving(true)}
                     >
                       <ArrowLeftRight className="size-4" aria-hidden />
-                      Move horse
+                      {t.dialog.moveHorse}
                     </Button>
                     <Button
                       variant="destructive"
@@ -250,7 +270,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                       onClick={handleCancel}
                     >
                       <X className="size-4" aria-hidden />
-                      Release stable
+                      {t.dialog.releaseStable}
                     </Button>
                   </div>
                 </>
@@ -269,11 +289,11 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                 >
                   {selected.is_active ? (
                     <>
-                      <Ban className="size-4 mr-2" aria-hidden /> Block Stable
+                      <Ban className="size-4 mr-2" aria-hidden /> {t.dialog.block}
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="size-4 mr-2" aria-hidden /> Unblock Stable
+                      <CheckCircle className="size-4 mr-2" aria-hidden /> {t.dialog.unblock}
                     </>
                   )}
                 </Button>
@@ -286,9 +306,9 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
       <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Bulk Manage Barns</DialogTitle>
+            <DialogTitle>{t.bulk.title}</DialogTitle>
             <DialogDescription>
-              Select multiple barns to block or unblock at once. Occupied stables will not be blocked.
+              {t.bulk.description}
             </DialogDescription>
           </DialogHeader>
 
@@ -304,7 +324,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
                   checked={selectedBarns.includes(barn)}
                   onChange={() => toggleBarnSelection(barn)}
                 />
-                <span className="text-sm font-medium">Barn {barn}</span>
+                <span className="text-sm font-medium">{t.bulk.barn.replace('{{barn}}', barn)}</span>
               </label>
             ))}
           </div>
@@ -316,7 +336,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
               disabled={isPending || selectedBarns.length === 0}
               onClick={() => handleBulkToggle(false)}
             >
-              <Ban className="size-4 mr-2" aria-hidden /> Block Selected
+              <Ban className="size-4 mr-2" aria-hidden /> {t.bulk.block}
             </Button>
             <Button
               variant="default"
@@ -324,7 +344,7 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
               disabled={isPending || selectedBarns.length === 0}
               onClick={() => handleBulkToggle(true)}
             >
-              <CheckCircle className="size-4 mr-2" aria-hidden /> Unblock Selected
+              <CheckCircle className="size-4 mr-2" aria-hidden /> {t.bulk.unblock}
             </Button>
           </div>
         </DialogContent>

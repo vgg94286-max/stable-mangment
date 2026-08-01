@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { logAdminAction } from '@/app/actions/audit'
 import {
   sql,
   type Horse,
@@ -35,22 +36,30 @@ export async function getAdminPhone(): Promise<string | null> {
 }
 
 // Save or update the admin phone number (Admin only)
-export async function setAdminPhone(phone: string): Promise<ActionResult> {
-  await requireAdminSession()
+export async function setAdminPhone(phone: string , lang: string): Promise<ActionResult> {
+  const session = await requireAdminSession()
   try {
+    const oldPhoneRows = await sql`SELECT value FROM settings WHERE key = 'admin_phone'`
+    const oldPhone = oldPhoneRows[0]?.value || 'None'
+
     await sql`
       INSERT INTO settings (key, value) 
       VALUES ('admin_phone', ${phone.trim()})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `
-    revalidatePath('/dashboard')
-    revalidatePath('/admin')
+
+    await logAdminAction('UPDATE_PHONE', 'Settings', 'admin_phone', 
+      `${session.name} changed admin phone number from ${oldPhone} to ${phone.trim()}.`, 
+      { prev: oldPhone, new: phone.trim() }
+    )
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Failed to update phone number.' }
   }
 }
-
 export type ActionResult = { ok: boolean; error?: string }
 
 // --- Reads -----------------------------------------------------------------
@@ -58,7 +67,7 @@ export type ActionResult = { ok: boolean; error?: string }
 // Full grid of every stable joined with any active reservation + horse + rider.
 // app/actions/stables.ts
 
-export async function getStableGrid(): Promise<StableGridItem[]> {
+export async function getStableGrid(lang:string): Promise<StableGridItem[]> {
   const session = await requireSession() 
   const rows = (await sql`
     SELECT
@@ -82,7 +91,7 @@ export async function getStableGrid(): Promise<StableGridItem[]> {
       if (s.status === 'occupied' && s.rider_id !== session.userId) {
         return {
           ...s,
-          horse_name: 'Occupied',
+          horse_name: lang === 'ar' ? 'محجوز' : 'Reserved',
           rider_name: null,
           rider_id: null,
           gender: null,
@@ -95,13 +104,23 @@ export async function getStableGrid(): Promise<StableGridItem[]> {
 }
 export async function toggleStableActive(
   stableId: number, 
-  isActive: boolean
+  isActive: boolean,
+  lang: string
+
 ): Promise<ActionResult> {
-  await requireAdminSession()
+  const session = await requireAdminSession()
   try {
+    const st = (await sql`SELECT label FROM stables WHERE id = ${stableId}`)[0] as { label: string }
+    
     await sql`UPDATE stables SET is_active = ${isActive} WHERE id = ${stableId}`
-    revalidatePath('/admin')
-    revalidatePath('/dashboard')
+    
+    const desc = `${session.name} ${isActive ? 'unblocked' : 'blocked'} Stable ${st.label}.`
+    await logAdminAction('BLOCK_UNBLOCK_STABLE', 'Stable', stableId, desc, { 
+      stable: st.label, active: isActive 
+    })
+
+   revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Could not update stable status.' }
@@ -111,63 +130,75 @@ export async function toggleStableActive(
 
 export async function toggleBarnsActive(
   barns: string[],
-  isActive: boolean
+  isActive: boolean,
+  lang:string
 ): Promise<ActionResult> {
-  await requireAdminSession()
+  const session = await requireAdminSession()
   if (!barns || barns.length === 0) {
     return { ok: false, error: 'No barns selected.' }
   }
 
   try {
     if (isActive) {
-      // Unblock all stables in the selected barns
       await sql`UPDATE stables SET is_active = true WHERE barn = ANY(${barns}::text[])`
     } else {
-      // Block all stables in the selected barns, EXCEPT those currently occupied
       await sql`
         UPDATE stables 
         SET is_active = false 
         WHERE barn = ANY(${barns}::text[]) AND status != 'occupied'
       `
     }
-    revalidatePath('/admin')
-    revalidatePath('/dashboard')
+
+    const desc = `${session.name} bulk ${isActive ? 'unblocked' : 'blocked'} Barn(s): ${barns.join(', ')}.`
+    await logAdminAction('BULK_BLOCK_UNBLOCK', 'Barn', barns.join(','), desc, { 
+      barns, active: isActive 
+    })
+
+   revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Could not update barns.' }
   }
 }
-
 // 3. Add action to set barn visible range (Updated to protect occupied stables)
 export async function setBarnVisibleRange(
   barn: string, 
-  maxNumber: number
+  maxNumber: number,
+  lang:string
 ): Promise<ActionResult> {
-  await requireAdminSession()
+  const session = await requireAdminSession()
   try {
-    // Sets stables to active if they are <= maxNumber OR if they are currently occupied
     await sql`
       UPDATE stables 
       SET is_active = (number <= ${maxNumber} OR status = 'occupied')
       WHERE barn = ${barn}
     `
-    revalidatePath('/admin')
-    revalidatePath('/dashboard')
+    
+    const desc = `${session.name} changed Barn ${barn} visible range to 1–${maxNumber}.`
+    await logAdminAction('VISIBLE_RANGE', 'Barn', barn, desc, { 
+      barn, maxNumber 
+    })
+
+   revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Could not update barn range.' }
   }
 }
 export async function getBarnSummary(): Promise<
-  { barn: string; total: number; occupied: number }[]
+  { barn: string; total: number; occupied: number; available: number; blocked: number }[]
 > {
   await requireSession()
   return (await sql`
     SELECT barn,
       count(*)::int AS total,
-      count(*) FILTER (WHERE status = 'occupied')::int AS occupied
+      count(*) FILTER (WHERE status = 'occupied')::int AS occupied,
+      count(*) FILTER (WHERE status != 'occupied' AND is_active = true)::int AS available,
+      count(*) FILTER (WHERE is_active = false)::int AS blocked
     FROM stables GROUP BY barn ORDER BY barn
-  `) as { barn: string; total: number; occupied: number }[]
+  `) as { barn: string; total: number; occupied: number; available: number; blocked: number }[]
 }
 
 export async function getMyHorses(): Promise<Horse[]> {
@@ -246,6 +277,7 @@ export async function createHorse(input: {
   international_id?: number | null 
   gender?: string | null
   notes?: string | null
+  lang: string
 }): Promise<{ ok: boolean; error?: string; horseId?: number }> {
   const session = await requireSession()
   if (!input.name?.trim()) return { ok: false, error: 'Horse name is required.' }
@@ -260,7 +292,8 @@ export async function createHorse(input: {
       )
       RETURNING id
     `) as { id: number }[]
-    revalidatePath('/dashboard')
+    revalidatePath(`/${input.lang}/dashboard`)
+   
     return { ok: true, horseId: rows[0].id }
   } catch (e) {
     return { ok: false, error: (e as Error).message }
@@ -271,7 +304,9 @@ export async function createHorse(input: {
 export async function reserveStable(
   stableId: number,
   horseId: number,
-  note?: string
+  lang:string,
+  note?: string,
+  
 ): Promise<ActionResult> {
   const session = await requireSession()
 
@@ -295,8 +330,8 @@ export async function reserveStable(
       `
     }
     
-    revalidatePath('/dashboard')
-    revalidatePath('/admin')
+   revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: cleanPgError((e as Error).message) }
@@ -306,10 +341,22 @@ export async function reserveStable(
 // Cancel a reservation. Riders can only cancel their own; admins can cancel any.
 export async function cancelReservation(
   reservationId: number,
+  lang: string
 ): Promise<ActionResult> {
   const session = await requireSession()
+  let prev: any = null
 
-  if (session.role !== 'admin') {
+  // If admin, fetch details before cancelling for the log
+  if (session.role === 'admin') {
+    prev = (await sql`
+      SELECT h.name as horse_name, u.full_name as rider_name, s.barn, s.number as stable_number 
+      FROM reservations r
+      JOIN horses h ON r.horse_id = h.id
+      JOIN users u ON r.rider_id = u.id
+      JOIN stables s ON r.stable_id = s.id
+      WHERE r.id = ${reservationId}
+    `)[0]
+  } else {
     const owns = (await sql`
       SELECT 1 FROM reservations WHERE id = ${reservationId} AND rider_id = ${session.userId}
     `) as unknown[]
@@ -318,8 +365,16 @@ export async function cancelReservation(
 
   try {
     await sql`SELECT cancel_reservation(${reservationId})`
-    revalidatePath('/dashboard')
-    revalidatePath('/admin')
+    
+    if (session.role === 'admin' && prev) {
+      const desc = `${session.name} released horse ${prev.horse_name} (Rider: ${prev.rider_name}) from Barn ${prev.barn}-${prev.stable_number}.`
+      await logAdminAction('RELEASE_STABLE', 'Reservation', reservationId, desc, { 
+        horse: prev.horse_name, rider: prev.rider_name, stable: `Barn ${prev.barn}-${prev.stable_number}` 
+      })
+    }
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: cleanPgError((e as Error).message) }
@@ -330,14 +385,36 @@ export async function cancelReservation(
 export async function moveReservation(
   reservationId: number,
   newStableId: number,
+  lang: string
 ): Promise<ActionResult> {
-  await requireAdminSession()
+  const session = await requireAdminSession()
   try {
+    // 1. Fetch current state BEFORE moving to construct the log
+    const prev = (await sql`
+      SELECT s.barn, s.number as stable_number, h.name as horse_name, u.full_name as rider_name 
+      FROM reservations r
+      JOIN stables s ON s.id = r.stable_id
+      JOIN horses h ON h.id = r.horse_id
+      JOIN users u ON u.id = r.rider_id
+      WHERE r.id = ${reservationId}
+    `)[0] as any
+
+    const next = (await sql`SELECT barn, number FROM stables WHERE id = ${newStableId}`)[0] as any
+
+    // 2. Perform original action
     await sql`SELECT move_reservation(${reservationId}, ${newStableId})`
-    
     await sql`UPDATE stables SET is_active = true WHERE id = ${newStableId}`
-    revalidatePath('/admin')
-    revalidatePath('/dashboard')
+
+    // 3. Log the activity
+    const desc = `${session.name} moved horse ${prev.horse_name} (Rider: ${prev.rider_name}) from Barn ${prev.barn} - Stable ${prev.stable_number} to Barn ${next.barn} - Stable ${next.number}.`
+    
+    await logAdminAction('MOVE_STABLE', 'Reservation', reservationId, desc, {
+      horse: prev.horse_name, rider: prev.rider_name, 
+      from: `Barn ${prev.barn}-${prev.stable_number}`, to: `Barn ${next.barn}-${next.number}`
+    })
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: cleanPgError((e as Error).message) }
@@ -368,25 +445,35 @@ export async function swapReservations(
   res1Id: number,
   stable1Id: number,
   res2Id: number,
-  stable2Id: number
+  stable2Id: number,
+  lang: string
 ): Promise<ActionResult> {
-  await requireAdminSession()
+  const session = await requireAdminSession()
   try {
-    // 1. Temporarily move res1 out of the 'active' state using a recognized status
-    // Note: If your schema spells this as 'cancelled' (two L's), adjust it here!
+    // 1. Fetch previous state for both reservations
+    const r1 = (await sql`
+      SELECT h.name as horse_name, u.full_name as rider_name, s.barn, s.number as stable_number 
+      FROM reservations r JOIN horses h ON r.horse_id = h.id JOIN users u ON r.rider_id = u.id JOIN stables s ON r.stable_id = s.id 
+      WHERE r.id = ${res1Id}
+    `)[0] as any
+    const r2 = (await sql`
+      SELECT h.name as horse_name, u.full_name as rider_name, s.barn, s.number as stable_number 
+      FROM reservations r JOIN horses h ON r.horse_id = h.id JOIN users u ON r.rider_id = u.id JOIN stables s ON r.stable_id = s.id 
+      WHERE r.id = ${res2Id}
+    `)[0] as any
+
     await sql`UPDATE reservations SET status = 'cancelled' WHERE id = ${res1Id}`
-    
-    // 2. Move res2 into the newly freed stable1
     await sql`UPDATE reservations SET stable_id = ${stable1Id} WHERE id = ${res2Id}`
-    
-    // 3. Move res1 into stable2 and immediately restore its 'active' status
     await sql`UPDATE reservations SET stable_id = ${stable2Id}, status = 'active' WHERE id = ${res1Id}`
-    
-    // Ensure both stables remain unblocked (active)
     await sql`UPDATE stables SET is_active = true WHERE id IN (${stable1Id}, ${stable2Id})`
     
-    revalidatePath('/admin')
-    revalidatePath('/dashboard')
+    const desc = `${session.name} swapped ${r1.horse_name} (Barn ${r1.barn}-${r1.stable_number}) with ${r2.horse_name} (Barn ${r2.barn}-${r2.stable_number}).`
+    await logAdminAction('SWAP_STABLES', 'Reservation', res1Id, desc, { 
+      res1: r1, res2: r2 
+    })
+
+   revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     console.error('Error swapping reservations:', e)
@@ -395,26 +482,34 @@ export async function swapReservations(
 }
 
 // Update the official document URL (Admin only)
-export async function setOfficialDocument(url: string, docKey: string = 'official_document'): Promise<ActionResult> {
-  await requireAdminSession()
+
+export async function setOfficialDocument(url: string, docKey: string = 'official_document' ,lang: string): Promise<ActionResult> {
+  const session = await requireAdminSession()
   try {
+    const oldDocRows = await sql`SELECT value FROM settings WHERE key = ${docKey}`
+    const oldDocUrl = oldDocRows[0]?.value || 'None'
+
     await sql`
       INSERT INTO settings (key, value) 
       VALUES (${docKey}, ${url})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `
-    revalidatePath('/dashboard')
-    revalidatePath('/admin')
+    
+    const desc = `${session.name} uploaded a new ${docKey} document.`
+    await logAdminAction('UPLOAD_FILE', 'Settings', docKey, desc, { 
+      prev: oldDocUrl, new: url, docKey 
+    })
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Failed to update document.' }
   }
 }
-
-export async function deleteDocument(url: string, docKey: string): Promise<ActionResult> {
-  await requireAdminSession()
+export async function deleteDocument(url: string, docKey: string, lang: string): Promise<ActionResult> {
+  const session = await requireAdminSession()
   try {
-    // Extract file key from URL (works for ufs.sh/f/KEY or utfs.io/f/KEY)
     const fileKey = url.split('/').pop(); 
     if (fileKey) {
       await utapi.deleteFiles(fileKey);
@@ -422,8 +517,13 @@ export async function deleteDocument(url: string, docKey: string): Promise<Actio
 
     await sql`DELETE FROM settings WHERE key = ${docKey}`
     
-    revalidatePath('/dashboard')
-    revalidatePath('/admin')
+    const desc = `${session.name} deleted the ${docKey} document.`
+    await logAdminAction('DELETE_FILE', 'Settings', docKey, desc, { 
+      url, docKey 
+    })
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'Failed to delete document.' }
@@ -439,4 +539,45 @@ export async function getRiderHorses(riderId: number): Promise<Horse[]> {
     ORDER BY name ASC
   `) as Horse[]
   return rows
+}
+
+// app/actions/stables.ts (Add these functions)
+
+export async function getFacilityLocation(): Promise<string | null> {
+  const rows = (await sql`
+    SELECT value FROM settings WHERE key = 'facility_location'
+  `) as { value: string }[]
+  return rows[0]?.value || null
+}
+
+export async function setFacilityLocation(url: string,lang:string): Promise<ActionResult> {
+  const session = await requireAdminSession()
+  try {
+    // Validate that it's a properly formatted URL
+    try {
+      new URL(url.trim());
+    } catch (_) {
+      return { ok: false, error: 'Invalid URL format. Please provide a valid link.' }
+    }
+
+    const oldLocationRows = await sql`SELECT value FROM settings WHERE key = 'facility_location'`
+    const oldLocation = oldLocationRows[0]?.value || 'None'
+
+    await sql`
+      INSERT INTO settings (key, value) 
+      VALUES ('facility_location', ${url.trim()})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+    `
+
+    await logAdminAction('UPDATE_LOCATION', 'Settings', 'facility_location', 
+      `${session.name} changed facility location link.`, 
+      { prev: oldLocation, new: url.trim() }
+    )
+
+    revalidatePath(`/${lang}/dashboard`)
+    revalidatePath(`/${lang}/admin`)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: 'Failed to update facility location.' }
+  }
 }

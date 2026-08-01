@@ -29,6 +29,7 @@ export default async function AdminLoginPage({
     </div>
     
     <AuthShell
+      params={params}
       title={adminLogin.title}
       subtitle={adminLogin.subtitle}
       footer={

@@ -24,6 +24,7 @@ export default async function RegisterPage({
   return (
      <DictionaryProvider dictionary={dict} lang={lang}>
     <AuthShell
+    params={params}
       title={register.title}
       subtitle={register.subtitle}
       footer={
