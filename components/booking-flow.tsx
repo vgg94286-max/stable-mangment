@@ -64,6 +64,7 @@ export function BookingFlow({
   const hoveredCellRef = useRef<HTMLElement | null>(null)
 
   const selectedHorse = horses.find(h => h.id === selectedHorseId)
+  const gridScrollRef = useRef<HTMLDivElement | null>(null)
 
   function reset() {
     setStep('horse')
@@ -159,13 +160,13 @@ export function BookingFlow({
     // ever found. Referencing the container directly and comparing rects avoids that.
     let scrollSpeed = 0
     let rafId: number | null = null
-
+    
     function scrollLoop() {
-      const container = document.querySelector<HTMLElement>('[data-stable-scroll-container]')
-      if (container && scrollSpeed !== 0) {
-        container.scrollTop += scrollSpeed
-      }
-      rafId = requestAnimationFrame(scrollLoop)
+      const container = gridScrollRef.current
+  if (container && scrollSpeed !== 0) {
+    container.scrollTop += scrollSpeed
+  }
+  rafId = requestAnimationFrame(scrollLoop)
     }
     rafId = requestAnimationFrame(scrollLoop)
 
@@ -183,7 +184,7 @@ export function BookingFlow({
         hoveredCellRef.current = cellEl
       }
 
-      const container = document.querySelector<HTMLElement>('[data-stable-scroll-container]')
+      const container = gridScrollRef.current
       if (!container) {
         scrollSpeed = 0
         return
@@ -437,6 +438,7 @@ export function BookingFlow({
               onDropHorse={handleDropHorse}
               isAdmin={false} 
               dict={dictionary}
+               scrollContainerRef={gridScrollRef}
             />
           </div>
         ) : (

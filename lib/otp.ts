@@ -61,7 +61,7 @@ function emailHtml(code: string, purpose: OtpPurpose) {
       : 'Use the code below to reset your password.'
   return `
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:32px;color:#1a3b34">
-    <h1 style="font-size:20px;color:#1f6f5c;margin:0 0 8px">Saudi Equestrian & Polo Federation</h1>
+    <h1 style="font-size:20px;color:#1f6f5c;margin:0 0 8px">Fanda</h1>
     <h2 style="font-size:16px;margin:0 0 16px">${heading}</h2>
     <p style="font-size:14px;line-height:1.6;color:#44605a">${intro}</p>
     <div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1f6f5c;background:#eaf5f1;border-radius:8px;padding:16px;text-align:center;margin:16px 0">${code}</div>

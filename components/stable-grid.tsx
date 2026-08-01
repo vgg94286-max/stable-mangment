@@ -132,6 +132,7 @@ export function StableGrid({
   isAdmin,
   onDropHorse,
   dict,
+  scrollContainerRef
 }: {
   items: StableGridItem[]
   onCellClick?: (item: StableGridItem) => void
@@ -140,6 +141,7 @@ export function StableGrid({
   isAdmin?: boolean
   onDropHorse?: (stableId: number) => void
   dict: any
+  scrollContainerRef?: React.MutableRefObject<HTMLDivElement | null>
 }) {
   const [query, setQuery] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -237,11 +239,14 @@ export function StableGrid({
       </div>
 
       <div ref={measureRef} className="w-full">
-        <div
-          ref={scrollRef}
-          data-stable-scroll-container=""
-          className="h-[55vh] min-h-[350px] sm:h-[500px] overflow-auto rounded-lg border border-border bg-background/40 p-3"
-        >
+       <div
+    ref={(el) => {
+      scrollRef.current = el
+      if (scrollContainerRef) scrollContainerRef.current = el
+    }}
+    data-stable-scroll-container=""
+    className="h-[55vh] min-h-[350px] sm:h-[500px] overflow-auto rounded-lg border border-border bg-background/40 p-3"
+  >
           <div
             style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}
           >
