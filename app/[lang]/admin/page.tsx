@@ -46,10 +46,7 @@ export default async function AdminPage({
   const totalStables = summary.reduce((a, b) => a + b.total, 0)
   const occupied = summary.reduce((a, b) => a + b.occupied, 0)
   const available = summary.reduce((a, b) => a + b.available, 0)
-  const occupancy = totalStables ? Math.round((occupied / totalStables) * 100) : 0
-  
-  // Extract just the unique barn names from the summary data
-  const uniqueBarns = summary.map((s) => s.barn)
+ 
 
   return (
     <DictionaryProvider dictionary={dict} lang={lang}>
@@ -69,7 +66,7 @@ export default async function AdminPage({
             <StatCard label={t.totalStables} value={totalStables} />
             <StatCard label={t.occupied} value={occupied} />
             <StatCard label={t.available} value={available} />
-            <StatCard label={t.occupancy} value={`${occupancy}%`} />
+            
           </div>
 
           <Tabs defaultValue="grid" className="mt-8">
@@ -127,7 +124,7 @@ export default async function AdminPage({
                 endpoint="doorPicDocument"
                 dict ={dict}
               />
-              <BarnRangeManager barns={uniqueBarns} />
+              <BarnRangeManager barns={summary} />
             </TabsContent>
             
             <TabsContent value="audit" className="mt-4">

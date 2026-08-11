@@ -32,7 +32,19 @@ import { GENDER_META, type GenderType, GENDER_OPTIONS } from '@/lib/horse-types'
 import { cn } from '@/lib/utils'
 import { useDictionary } from '@/context/dictionary-context'
 
-type Step = 'horse' | 'stable' | 'confirm'
+// Step 'confirm' was removed: booking (including the note) now happens inline,
+// via a small popup shown at the moment a horse is dropped onto a stable.
+type Step = 'horse' | 'stable'
+
+// A drop that has landed on a valid stable cell but hasn't been committed yet.
+// We hold it here while the note popup is open, and only call reserveStable()
+// once the rider confirms (or skips the note).
+type PendingDrop = {
+  horse: Horse
+  stable: StableGridItem
+  x: number
+  y: number
+}
 
 export function BookingFlow({
   horses,
@@ -42,17 +54,19 @@ export function BookingFlow({
   stables: StableGridItem[]
 }) {
   const router = useRouter()
-  const { dictionary,lang  } = useDictionary()
+  const { dictionary, lang } = useDictionary()
   const t = dictionary.bookingFlow
 
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>('horse')
-  const [selectedHorseId, setSelectedHorseId] = useState<number | null>(
-    horses[0]?.id ?? null,
-  )
-  
-  const [selectedStable, setSelectedStable] = useState<StableGridItem | null>(null)
-  const [note, setNote] = useState('')
+
+  // Multiple horses can now be selected in step 1 and booked one-by-one via
+  // drag & drop in step 2.
+  const [selectedHorseIds, setSelectedHorseIds] = useState<number[]>([])
+  const [localHorses, setLocalHorses] = useState<Horse[]>(horses)
+  const [localStables, setLocalStables] = useState<StableGridItem[]>(stables)
+  const [bookedHorseIds, setBookedHorseIds] = useState<Set<number>>(new Set())
+
   const [isPending, startTransition] = useTransition()
 
   const [name, setName] = useState('')
@@ -61,16 +75,27 @@ export function BookingFlow({
 
   const [isDragging, setIsDragging] = useState(false)
   const [ghostPos, setGhostPos] = useState({ x: 0, y: 0 })
+  const [draggingHorse, setDraggingHorse] = useState<Horse | null>(null)
   const hoveredCellRef = useRef<HTMLElement | null>(null)
 
-  const selectedHorse = horses.find(h => h.id === selectedHorseId)
+  // Note popup shown right where the horse was dropped.
+  const [pendingDrop, setPendingDrop] = useState<PendingDrop | null>(null)
+  const [noteText, setNoteText] = useState('')
+
   const gridScrollRef = useRef<HTMLDivElement | null>(null)
+
+  const pendingHorses = localHorses.filter((h) => selectedHorseIds.includes(h.id))
+  const allBooked = selectedHorseIds.length > 0 && bookedHorseIds.size === selectedHorseIds.length
 
   function reset() {
     setStep('horse')
-    setSelectedHorseId(horses[0]?.id ?? null)
-    setSelectedStable(null)
-    setNote('')
+    setSelectedHorseIds([])
+    setLocalHorses(horses)
+    setLocalStables(stables)
+    setBookedHorseIds(new Set())
+    setDraggingHorse(null)
+    setPendingDrop(null)
+    setNoteText('')
     setName('')
     setInternationalId('')
     setGender('')
@@ -81,8 +106,23 @@ export function BookingFlow({
     if (!next) reset()
   }
 
+  function toggleHorseSelection(id: number) {
+    setSelectedHorseIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+    setName('')
+    setInternationalId('')
+    setGender('')
+  }
+
   async function goToStableStep() {
-    if (selectedHorseId) {
+    const isCreatingNew = Boolean(name.trim() || internationalId.trim() || gender.trim())
+
+    if (!isCreatingNew) {
+      if (selectedHorseIds.length === 0) {
+        toast.error(t.horse.validation)
+        return
+      }
       setStep('stable')
       return
     }
@@ -98,49 +138,49 @@ export function BookingFlow({
         international_id: internationalId ? parseInt(internationalId, 10) : null,
         gender: gender || null,
         notes: null,
-        lang:lang
+        lang: lang,
       })
       if (!res.ok || !res.horseId) {
         toast.error(res.error || t.horse.saveError)
         return
       }
       toast.success(t.horse.saveSuccess)
-      setSelectedHorseId(res.horseId)
+      const newHorse = {
+        id: res.horseId,
+        name,
+        gender: gender || null,
+        international_id: internationalId ? parseInt(internationalId, 10) : null,
+        notes: null,
+      } as unknown as Horse
+      setLocalHorses((prev) => [...prev, newHorse])
+      setSelectedHorseIds((prev) => [...prev, res.horseId as number])
       router.refresh()
       setStep('stable')
     })
   }
 
-  function handleStableClick(item: StableGridItem) {
-    if (!item.is_active) {
-      toast.error(t.stable.unavailable.replace('{{label}}', item.label))
-      return
-    }
-    if (item.status === 'occupied') {
-      toast.error(t.stable.occupied.replace('{{label}}', item.label))
-      return
-    }
-    if (!selectedHorseId) return
-    
-    setSelectedStable(item)
-    setStep('confirm')
-  }
+  // Tap-to-book was removed: with multiple horses possibly selected, tapping a
+  // stable is ambiguous about which horse it's for, so booking now happens
+  // exclusively via drag & drop. This handler is intentionally a no-op — it's
+  // still passed down so StableCell's existing enabled/disabled styling (which
+  // depends on onClick being present) stays exactly as it was.
+  function handleStableClick(_item: StableGridItem) {}
 
-  function handleDropHorse(stableId: number) {
-    if (!selectedHorseId) return
-    const item = stables.find((s) => s.id === stableId)
-    
+  function handleDropHorse(stableId: number, x: number, y: number) {
+    const horse = draggingHorse
+    if (!horse) return
+    const item = localStables.find((s) => s.id === stableId)
     if (!item || !item.is_active || item.status === 'occupied') return
-    
-    setSelectedStable(item)
-    setStep('confirm')
+
+    setPendingDrop({ horse, stable: item, x, y })
+    setNoteText('')
   }
 
-  function handlePointerDownOnHorse(e: React.PointerEvent<HTMLDivElement>) {
-    if (!selectedHorse) return
+  function handlePointerDownOnHorse(e: React.PointerEvent<HTMLDivElement>, horse: Horse) {
     // Prevent this from also being treated as a text-selection or a click-drag on the card.
     e.preventDefault()
     setGhostPos({ x: e.clientX, y: e.clientY })
+    setDraggingHorse(horse)
     setIsDragging(true)
   }
 
@@ -160,7 +200,7 @@ export function BookingFlow({
     // ever found. Referencing the container directly and comparing rects avoids that.
     let scrollSpeed = 0
     let rafId: number | null = null
-    
+
     function scrollLoop() {
       const container = gridScrollRef.current
   if (container && scrollSpeed !== 0) {
@@ -222,9 +262,10 @@ export function BookingFlow({
 
       if (cellEl && !(cellEl as HTMLButtonElement).disabled) {
         const id = Number(cellEl.dataset.stableId)
-        if (!Number.isNaN(id)) handleDropHorse(id)
+        if (!Number.isNaN(id)) handleDropHorse(id, e.clientX, e.clientY)
       }
       setIsDragging(false)
+      setDraggingHorse(null)
     }
 
     document.body.style.userSelect = 'none'
@@ -243,17 +284,44 @@ export function BookingFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging])
 
-  function confirmBooking() {
-    if (!selectedStable || !selectedHorseId) return
-    
+  function cancelDrop() {
+    setPendingDrop(null)
+    setNoteText('')
+  }
+
+  function confirmDrop() {
+    if (!pendingDrop) return
+    const { horse, stable } = pendingDrop
+    const noteToSave = noteText
+
     startTransition(async () => {
-      const res = await reserveStable(selectedStable.id, selectedHorseId,lang, note)
+      const res = await reserveStable(stable.id, horse.id, lang, noteToSave)
       if (!res.ok) {
         toast.error(res.error || t.confirm.reservationError)
         return
       }
-      toast.success(t.confirm.reservationSuccess.replace('{{label}}', selectedStable.label))
-      handleOpenChange(false)
+      toast.success(t.confirm.reservationSuccess.replace('{{label}}', stable.label))
+
+      setBookedHorseIds((prev) => {
+        const next = new Set(prev)
+        next.add(horse.id)
+        return next
+      })
+      setLocalStables((prev) =>
+        prev.map((s) =>
+          s.id === stable.id
+            ? {
+                ...s,
+                status: 'occupied',
+                horse_id: horse.id,
+                horse_name: horse.name,
+                gender: (horse as { gender?: string | null }).gender ?? s.gender,
+              }
+            : s,
+        ),
+      )
+      setPendingDrop(null)
+      setNoteText('')
       router.refresh()
     })
   }
@@ -266,18 +334,16 @@ export function BookingFlow({
           {t.button}
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-4xl p-5 sm:p-6">
         <DialogHeader className="mb-1">
           <DialogTitle>
             {step === 'horse' && t.steps.horseTitle}
             {step === 'stable' && t.steps.stableTitle}
-            {step === 'confirm' && t.steps.confirmTitle}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
             {step === 'horse' && t.steps.horseDescription}
             {step === 'stable' && t.steps.stableDescription}
-            {step === 'confirm' && t.steps.confirmDescription}
           </DialogDescription>
         </DialogHeader>
 
@@ -292,17 +358,12 @@ export function BookingFlow({
                   <div className="flex flex-col gap-2">
                     {horses.map((h) => {
                       const meta = h.gender ? GENDER_META[h.gender as GenderType] : null
-                      const active = selectedHorseId === h.id
+                      const active = selectedHorseIds.includes(h.id)
                       return (
                         <button
                           key={h.id}
                           type="button"
-                          onClick={() => {
-                            setSelectedHorseId(h.id)
-                            setName('')
-                            setInternationalId('')
-                            setGender('')
-                          }}
+                          onClick={() => toggleHorseSelection(h.id)}
                           className={cn(
                             'flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/50 text-left',
                             active && 'border-primary bg-primary/5 ring-1 ring-primary',
@@ -343,15 +404,12 @@ export function BookingFlow({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-border p-3 sm:p-4 bg-card">
                 <div className="col-span-1 sm:col-span-2 flex flex-col gap-1.5">
                   <Label htmlFor="h-name" className="text-xs sm:text-sm">{t.horse.name} *</Label>
-                  <Input 
-                    id="h-name" 
-                    className="h-9" 
-                    value={name} 
-                    onChange={(e) => {
-                      setName(e.target.value)
-                      if (e.target.value) setSelectedHorseId(null)
-                    }} 
-                    placeholder={t.horse.namePlaceholder} 
+                  <Input
+                    id="h-name"
+                    className="h-9"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t.horse.namePlaceholder}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -361,21 +419,15 @@ export function BookingFlow({
                     type="number"
                     className="h-9"
                     value={internationalId}
-                    onChange={(e) => {
-                      setInternationalId(e.target.value)
-                      if (e.target.value) setSelectedHorseId(null)
-                    }}
+                    onChange={(e) => setInternationalId(e.target.value)}
                     placeholder={t.horse.internationalIdPlaceholder}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="h-gender" className="text-xs sm:text-sm">{t.horse.type} *</Label>
-                  <Select 
-                    value={gender} 
-                    onValueChange={(v) => {
-                      setGender(v ?? '')
-                      if (v) setSelectedHorseId(null)
-                    }}
+                  <Select
+                    value={gender}
+                    onValueChange={(v) => setGender(v ?? '')}
                   >
                     <SelectTrigger id="h-gender" className="h-9">
                       <SelectValue placeholder={t.horse.typePlaceholder} />
@@ -398,104 +450,93 @@ export function BookingFlow({
               </Button>
             </div>
           </div>
-        ) : step === 'stable' ? (
+        ) : (
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="sm"
                 className="self-start -ml-2 text-muted-foreground h-8"
-                onClick={() => setStep('horse')}
+                onClick={() => {
+                  setPendingDrop(null)
+                  setStep('horse')
+                }}
               >
                 <ArrowLeft className="mr-2 size-4" aria-hidden />
                 {t.stable.back}
               </Button>
             </div>
-            
-            {selectedHorse && (
+
+            {pendingHorses.length > 0 && (
               <div className="flex flex-col gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                  {t.stable.selectedHorse}
-                </span>
-                <div
-                  onPointerDown={handlePointerDownOnHorse}
-                  style={{ touchAction: 'none' }}
-                  className={cn(
-                    'flex cursor-grab select-none items-center gap-2 rounded-md border border-border bg-card p-2 shadow-sm transition-colors hover:border-primary active:cursor-grabbing',
-                    isDragging && 'opacity-50',
-                  )}
-                >
-                  <GripVertical className="size-4 text-muted-foreground/50" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-semibold text-foreground">{selectedHorse.name}</span>
-                  </div>
-                  <div className="ml-auto flex items-center gap-2">
-                    <span className="hidden text-[11px] text-muted-foreground sm:inline-block">
-                      {t.stable.dragHint}
-                    </span>
-                    <ArrowLeft className="size-3 -rotate-90 text-muted-foreground sm:hidden" />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {t.stable.selectedHorse}
+                  </span>
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    {bookedHorseIds.size}/{pendingHorses.length}
+                  </span>
                 </div>
+
+                {allBooked ? (
+                  <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2">
+                    <Check className="size-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      {lang === 'ar' ? 'تم حجز جميع الخيول' : 'All horses booked'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {pendingHorses.map((h) => {
+                      const booked = bookedHorseIds.has(h.id)
+                      const isBeingDragged = isDragging && draggingHorse?.id === h.id
+                      return (
+                        <div
+                          key={h.id}
+                          onPointerDown={
+                            booked ? undefined : (e) => handlePointerDownOnHorse(e, h)
+                          }
+                          style={{ touchAction: 'none' }}
+                          className={cn(
+                            'flex select-none items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 shadow-sm transition-colors',
+                            booked
+                              ? 'opacity-50'
+                              : 'cursor-grab hover:border-primary active:cursor-grabbing',
+                            isBeingDragged && 'opacity-50',
+                          )}
+                        >
+                          {booked ? (
+                            <Check className="size-4 text-primary" />
+                          ) : (
+                            <GripVertical className="size-4 text-muted-foreground/50" />
+                          )}
+                          <span className="text-sm font-semibold text-foreground">{h.name}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {!allBooked && (
+                  <span className="text-[11px] text-muted-foreground">{t.stable.dragHint}</span>
+                )}
               </div>
             )}
-            
-            <div className="h-px w-full bg-border" />
-            
-            <StableGrid 
-              items={stables} 
-              onCellClick={handleStableClick} 
-              onDropHorse={handleDropHorse}
-              isAdmin={false} 
-              dict={dictionary}
-               scrollContainerRef={gridScrollRef}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 py-2 sm:gap-6">
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:gap-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                 <div>
-                    <p className="text-xs text-muted-foreground">{t.confirm.horse}</p>
-                    <p className="text-sm font-medium text-foreground">{selectedHorse?.name}</p>
-                 </div>
-                 <div className="hidden h-8 w-px bg-border sm:block"></div>
-                 <div>
-                    <p className="text-xs text-muted-foreground">{t.confirm.stable}</p>
-                    <p className="text-sm font-medium text-foreground">{selectedStable?.label}</p>
-                 </div>
-                 <div className="hidden h-8 w-px bg-border sm:block"></div>
-                 <div>
-                    <p className="text-xs text-muted-foreground">{t.confirm.barn}</p>
-                    <p className="text-sm font-medium text-foreground">{selectedStable?.barn}</p>
-                 </div>
-              </div>
-              
-              <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3 sm:mt-4 sm:gap-3 sm:pt-4">
-                <Label htmlFor="note" className="text-xs sm:text-sm">{t.confirm.note}</Label>
-                <Textarea 
-                  id="note" 
-                  placeholder={t.confirm.notePlaceholder}
-                  value={note}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
-                  className="resize-none text-sm"
-                  rows={3}
-                />
-              </div>
-            </div>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-              <Button variant="outline" onClick={() => setStep('stable')} disabled={isPending} className="h-9">
-                {t.confirm.cancel}
-              </Button>
-              <Button onClick={confirmBooking} disabled={isPending} className="h-9">
-                {isPending ? t.confirm.confirming : t.confirm.confirm}
-              </Button>
-            </div>
+            <div className="h-px w-full bg-border" />
+
+            <StableGrid
+              items={localStables}
+              onCellClick={handleStableClick}
+              isAdmin={false}
+              dict={dictionary}
+              scrollContainerRef={gridScrollRef}
+            />
           </div>
         )}
       </DialogContent>
 
-      {isDragging && selectedHorse && typeof document !== 'undefined'
+      {isDragging && draggingHorse && typeof document !== 'undefined'
         ? createPortal(
             <div
               style={{
@@ -508,8 +549,68 @@ export function BookingFlow({
               className="flex items-center gap-2 rounded-md border border-primary bg-card px-3 py-2 shadow-lg"
             >
               <GripVertical className="size-4 text-muted-foreground/50" />
-              <span className="text-sm font-semibold text-foreground">{selectedHorse.name}</span>
+              <span className="text-sm font-semibold text-foreground">{draggingHorse.name}</span>
             </div>,
+            document.body,
+          )
+        : null}
+
+      {/* Note popup: shown right where the horse was dropped, so the note is
+          captured at drop-time instead of a separate confirmation step. */}
+      {pendingDrop && typeof document !== 'undefined'
+        ? createPortal(
+            <>
+              <div
+                onClick={cancelDrop}
+                style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+              />
+              <div
+                style={{
+                  position: 'fixed',
+                  left: Math.min(
+                    Math.max(pendingDrop.x - 130, 12),
+                    (typeof window !== 'undefined' ? window.innerWidth : 1024) - 272,
+                  ),
+                  top: Math.min(
+                    pendingDrop.y + 16,
+                    (typeof window !== 'undefined' ? window.innerHeight : 768) - 190,
+                  ),
+                  zIndex: 9999,
+                }}
+                className="flex w-64 flex-col gap-2 rounded-lg border border-primary bg-card p-3 shadow-xl"
+              >
+                <span className="text-xs font-semibold text-foreground">
+                  {pendingDrop.horse.name} → {pendingDrop.stable.label}
+                </span>
+                <Textarea
+                  autoFocus
+                  value={noteText}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNoteText(e.target.value)}
+                  placeholder={t.confirm.notePlaceholder}
+                  className="resize-none text-xs"
+                  rows={2}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                    onClick={cancelDrop}
+                    disabled={isPending}
+                  >
+                    {t.confirm.cancel}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={confirmDrop}
+                    disabled={isPending}
+                  >
+                    {isPending ? t.confirm.confirming : t.confirm.confirm}
+                  </Button>
+                </div>
+              </div>
+            </>,
             document.body,
           )
         : null}

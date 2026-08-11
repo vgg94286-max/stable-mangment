@@ -36,21 +36,26 @@ export async function getAdminPhone(): Promise<string | null> {
 }
 
 // Save or update the admin phone number (Admin only)
-export async function setAdminPhone(phone: string , lang: string): Promise<ActionResult> {
+// app/actions/stables.ts
+
+// Save or update the admin phone number (Admin only)
+export async function setAdminPhone(contactsJson: string, lang: string): Promise<ActionResult> {
   const session = await requireAdminSession()
   try {
     const oldPhoneRows = await sql`SELECT value FROM settings WHERE key = 'admin_phone'`
-    const oldPhone = oldPhoneRows[0]?.value || 'None'
+    const oldPhone = oldPhoneRows[0]?.value || '[]'
 
     await sql`
       INSERT INTO settings (key, value) 
-      VALUES ('admin_phone', ${phone.trim()})
+      VALUES ('admin_phone', ${contactsJson})
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `
-
-    await logAdminAction('UPDATE_PHONE', 'Settings', 'admin_phone', 
-      `${session.name} changed admin phone number from ${oldPhone} to ${phone.trim()}.`, 
-      { prev: oldPhone, new: phone.trim() }
+    
+    // Updated description to be cleaner for JSON arrays
+    const desc = `${session.name} updated the admin contact numbers.`
+    
+    await logAdminAction('UPDATE_PHONE', 'Settings', 'admin_phone', desc, 
+      { prev: oldPhone, new: contactsJson }
     )
 
     revalidatePath(`/${lang}/dashboard`)

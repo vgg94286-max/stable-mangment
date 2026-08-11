@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeftRight, X, Ban, CheckCircle, Layers } from 'lucide-react'
+import { ArrowLeftRight, X, Ban, CheckCircle } from 'lucide-react'
 
 import { StableGrid } from '@/components/stable-grid'
-import { cancelReservation, moveReservation, toggleStableActive, toggleBarnsActive, swapReservations } from '@/app/actions/stables'
+import { cancelReservation, moveReservation, toggleStableActive, swapReservations } from '@/app/actions/stables'
 import type { StableGridItem } from '@/lib/db'
 import { GENDER_META, type GenderType } from '@/lib/horse-types'
 import { useDictionary } from '@/context/dictionary-context'
@@ -28,12 +28,6 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
   const [selected, setSelected] = useState<StableGridItem | null>(null)
   const [moving, setMoving] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [isBulkOpen, setIsBulkOpen] = useState(false)
-  const [selectedBarns, setSelectedBarns] = useState<string[]>([])
-
-  const uniqueBarns = useMemo(() => {
-    return Array.from(new Set(stables.map((s) => s.barn))).sort()
-  }, [stables])
 
   function handleToggleActive() {
     if (!selected) return
@@ -53,27 +47,6 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
       setSelected({ ...selected, is_active: newState }) // Optimistic UI update
       router.refresh()
     })
-  }
-
-  function handleBulkToggle(isActive: boolean) {
-    if (selectedBarns.length === 0) return
-    startTransition(async () => {
-      const res = await toggleBarnsActive(selectedBarns, isActive,lang)
-      if (!res.ok) {
-        toast.error(res.error || t.bulk.error)
-        return
-      }
-      toast.success(isActive ? t.bulk.successUnblock : t.bulk.successBlock)
-      setIsBulkOpen(false)
-      setSelectedBarns([])
-      router.refresh()
-    })
-  }
-
-  function toggleBarnSelection(barn: string) {
-    setSelectedBarns((prev) =>
-      prev.includes(barn) ? prev.filter((b) => b !== barn) : [...prev, barn]
-    )
   }
 
   function handleCellClick(item: StableGridItem) {
@@ -147,25 +120,18 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-xs font-medium text-muted-foreground">{t.legend.type}:</span>
-          {(Object.keys(GENDER_META) as GenderType[]).map((g) => (
-            <span key={g} className="flex items-center gap-1.5 text-xs text-foreground">
-              <span className={`size-3 rounded-full ${GENDER_META[g].dot}`} />
-              {GENDER_META[g].label}
-            </span>
-          ))}
-          <span className="flex items-center gap-1.5 text-xs text-foreground">
-            <span className="size-3 rounded-full border border-border bg-card" />
-            {t.legend.available}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-card p-3">
+        <span className="text-xs font-medium text-muted-foreground">{t.legend.type}:</span>
+        {(Object.keys(GENDER_META) as GenderType[]).map((g) => (
+          <span key={g} className="flex items-center gap-1.5 text-xs text-foreground">
+            <span className={`size-3 rounded-full ${GENDER_META[g].dot}`} />
+            {GENDER_META[g].label}
           </span>
-        </div>
-        
-        {/* Bulk Action Button */}
-        <Button variant="outline" size="sm" onClick={() => setIsBulkOpen(true)}>
-          <Layers className="mr-2 size-4" /> {t.bulk.button}
-        </Button>
+        ))}
+        <span className="flex items-center gap-1.5 text-xs text-foreground">
+          <span className="size-3 rounded-full border border-border bg-card" />
+          {t.legend.available}
+        </span>
       </div>
 
       {moving && selected ? (
@@ -301,52 +267,6 @@ export function AdminGridManager({ stables }: { stables: StableGridItem[] }) {
 
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t.bulk.title}</DialogTitle>
-            <DialogDescription>
-              {t.bulk.description}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto rounded-md border p-3">
-            {uniqueBarns.map((barn) => (
-              <label
-                key={barn}
-                className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-muted/50"
-              >
-                <input
-                  type="checkbox"
-                  className="size-4 rounded border-gray-300 accent-primary"
-                  checked={selectedBarns.includes(barn)}
-                  onChange={() => toggleBarnSelection(barn)}
-                />
-                <span className="text-sm font-medium">{t.bulk.barn.replace('{{barn}}', barn)}</span>
-              </label>
-            ))}
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="secondary"
-              className="flex-1"
-              disabled={isPending || selectedBarns.length === 0}
-              onClick={() => handleBulkToggle(false)}
-            >
-              <Ban className="size-4 mr-2" aria-hidden /> {t.bulk.block}
-            </Button>
-            <Button
-              variant="default"
-              className="flex-1"
-              disabled={isPending || selectedBarns.length === 0}
-              onClick={() => handleBulkToggle(true)}
-            >
-              <CheckCircle className="size-4 mr-2" aria-hidden /> {t.bulk.unblock}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
