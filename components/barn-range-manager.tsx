@@ -111,7 +111,11 @@ function BarnRangeRow({ row }: { row: BarnSummaryRow }) {
           </div>
 
           {/* Per-barn on/off toggle — replaces the old standalone "Bulk Barn"
-              dialog, wired to the same toggleBarnsActive action. */}
+              dialog, wired to the same toggleBarnsActive action. The thumb is
+              absolutely positioned inside the track (rather than relying on
+              flex layout + an arbitrary translate value) so the slide is a
+              plain, reliable transform animation from one fixed offset to
+              another. */}
           <button
             type="button"
             role="switch"
@@ -120,16 +124,18 @@ function BarnRangeRow({ row }: { row: BarnSummaryRow }) {
             disabled={isToggling}
             onClick={handleToggle}
             className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
+              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-300 ease-in-out',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
               'disabled:cursor-not-allowed disabled:opacity-60',
+              'active:scale-95',
               isActive ? 'border-primary bg-primary' : 'border-border bg-muted',
             )}
           >
             <span
               className={cn(
-                'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
-                isActive ? 'translate-x-[22px]' : 'translate-x-1',
+                'pointer-events-none absolute left-0.5 top-1/2 size-5 -translate-y-1/2 rounded-full bg-white shadow-md',
+                'transition-transform duration-300 ease-in-out',
+                isActive ? 'translate-x-5' : 'translate-x-0',
               )}
             />
           </button>

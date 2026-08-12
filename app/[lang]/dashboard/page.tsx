@@ -18,6 +18,26 @@ import { LocationModalButton } from '@/components/location-modal-button'
 import { getDictionary } from '@/dictionaries/get-dictionary'
 import { DictionaryProvider } from '@/context/dictionary-context'
 
+type AdminContact = { name: string; phone: string }
+
+// adminPhone is stored as a JSON-encoded array of {name, phone} contacts (see
+// admin-phone-manager.tsx). Older data may still be a single plain phone
+// string, so fall back to treating the whole value as one contact's number.
+function parseAdminContacts(raw: string | null): AdminContact[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (c): c is AdminContact => !!c && typeof c === 'object' && !!c.phone,
+      )
+    }
+  } catch {
+    // Not JSON — legacy plain-string phone number.
+  }
+  return [{ name: 'Admin', phone: raw }]
+}
+
 export default async function DashboardPage({
   params,
 }: {
@@ -54,6 +74,7 @@ export default async function DashboardPage({
   const totalStables = summary.reduce((a, b) => a + b.total, 0)
   const occupied = summary.reduce((a, b) => a + b.occupied, 0)
   const available = summary.reduce((a, b) => a + b.available, 0)
+  const adminContacts = parseAdminContacts(adminPhone)
 
   return (
     <DictionaryProvider dictionary={dict} lang={lang}>
@@ -69,16 +90,25 @@ export default async function DashboardPage({
                   {t.welcome}, {session.name.split(' ')[0]}
                 </h1>
 
-                {adminPhone && (
-                  <a
-                    href={`tel:${adminPhone}`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                  >
-                    <Phone className="size-3 text-primary" />
-                    <span>
-                      {t.contactAdmin}: <strong>{adminPhone}</strong>
+                {adminContacts.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t.contactAdmin}:
                     </span>
-                  </a>
+                    {adminContacts.map((contact, i) => (
+                      <a
+                        key={`${contact.phone}-${i}`}
+                        href={`tel:${contact.phone}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        <Phone className="size-3 text-primary" />
+                        <span>
+                          {contact.name ? `${contact.name} · ` : ''}
+                          <strong>{contact.phone}</strong>
+                        </span>
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
 

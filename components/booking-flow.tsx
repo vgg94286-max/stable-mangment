@@ -84,6 +84,23 @@ export function BookingFlow({
 
   const gridScrollRef = useRef<HTMLDivElement | null>(null)
 
+  // Keep the local working copies in sync with fresh server data whenever the
+  // dialog is closed. Without this, if a reservation gets released elsewhere
+  // on the page (e.g. from RiderReservations) while this dialog is closed,
+  // router.refresh() brings fresh `stables`/`horses` props into this
+  // component, but useState's initial value is only read once on mount — so
+  // the grid would keep showing the stale snapshot from the last time the
+  // dialog happened to be open, until it was opened and closed again. We
+  // skip syncing while `open` is true so an in-progress multi-horse booking
+  // session (bookedHorseIds, etc.) never gets clobbered mid-flow.
+  useEffect(() => {
+    if (!open) {
+      setLocalStables(stables)
+      setLocalHorses(horses)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stables, horses, open])
+
   const pendingHorses = localHorses.filter((h) => selectedHorseIds.includes(h.id))
   const allBooked = selectedHorseIds.length > 0 && bookedHorseIds.size === selectedHorseIds.length
 
