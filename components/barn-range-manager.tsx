@@ -120,7 +120,7 @@ function BarnRangeRow({ row }: { row: BarnSummaryRow }) {
             disabled={isToggling}
             onClick={handleToggle}
             className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
+              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors duration-300 ease-in-out',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
               'disabled:cursor-not-allowed disabled:opacity-60',
               isActive ? 'border-primary bg-primary' : 'border-border bg-muted',
@@ -128,7 +128,7 @@ function BarnRangeRow({ row }: { row: BarnSummaryRow }) {
           >
             <span
               className={cn(
-                'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
+                'inline-block size-4 transform rounded-full bg-white shadow transition-transform duration-300 ease-in-out',
                 isActive ? 'translate-x-[22px]' : 'translate-x-1',
               )}
             />
