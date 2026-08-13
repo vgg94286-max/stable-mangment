@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { getDictionary } from '@/dictionaries/get-dictionary' 
 import { DictionaryProvider } from '@/context/dictionary-context'
+import { ThemeProvider } from '@/components/theme-provider' // Added import
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -27,14 +28,38 @@ export const metadata: Metadata = {
   },
 }
 
-
-
 export default async function RootLayout({
   children,
   params,
 }: Readonly<{
   children: React.ReactNode
   params: { lang: string }
+}>) {
+  const resolvedParams = await params
+  const lang = resolvedParams.lang 
+  const dict = await getDictionary(lang)
+  const isArabic = lang === 'ar'
+  
+  return (
+    <html 
+      lang={lang} 
+      dir={isArabic ? 'rtl' : 'ltr'} 
+      suppressHydrationWarning // Added to prevent next-themes hydration warnings
+      className={`${dmSans.variable} ${fraunces.variable}`}
+    >
+      <body className="font-sans antialiased bg-background text-foreground">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <DictionaryProvider dictionary={dict} lang={lang}>
+            {children}
+          </DictionaryProvider>
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
+        
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
+}  params: { lang: string }
 }>) {
   const resolvedParams = await params
   const lang = resolvedParams.lang 
