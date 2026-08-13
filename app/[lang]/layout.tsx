@@ -1,11 +1,11 @@
 import { Analytics } from '@vercel/analytics/next'
-import type { Metadata, Viewport } from 'next'
+import type { Metadata } from 'next'
 import { DM_Sans, Fraunces } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { getDictionary } from '@/dictionaries/get-dictionary' 
 import { DictionaryProvider } from '@/context/dictionary-context'
-import { ThemeProvider } from '@/components/theme-provider' // Added import
+import { ThemeProvider } from '@/components/theme-provider'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -44,7 +44,7 @@ export default async function RootLayout({
     <html 
       lang={lang} 
       dir={isArabic ? 'rtl' : 'ltr'} 
-      suppressHydrationWarning // Added to prevent next-themes hydration warnings
+      suppressHydrationWarning
       className={`${dmSans.variable} ${fraunces.variable}`}
     >
       <body className="font-sans antialiased bg-background text-foreground">
@@ -55,23 +55,6 @@ export default async function RootLayout({
           <Toaster position="top-center" richColors />
         </ThemeProvider>
         
-        {process.env.NODE_ENV === 'production' && <Analytics />}
-      </body>
-    </html>
-  )
-}  params: { lang: string }
-}>) {
-  const resolvedParams = await params
-  const lang = resolvedParams.lang 
-  const dict = await getDictionary(lang)
-  const isArabic = lang === 'ar'
-  return (
-    <html lang={lang} dir={isArabic ? 'rtl' : 'ltr'} className={`${dmSans.variable} ${fraunces.variable}  `}>
-      <body className="font-sans antialiased bg-background text-foreground">
-        <DictionaryProvider dictionary={dict} lang={lang}>
-          {children}
-        </DictionaryProvider>
-        <Toaster position="top-center" richColors />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
